@@ -63,6 +63,7 @@ class StudySessionUpdate(BaseModel):
 class StudySessionRead(BaseModel):
     id: int
     subject_id: int
+    subject_path: str | None = None  # 과목 전체 경로 (예: "CS > 네트워크")
     started_at: datetime
     ended_at: datetime
     study_seconds: int

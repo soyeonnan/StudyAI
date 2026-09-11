@@ -219,8 +219,8 @@ export default function StudyPage() {
                     />
                     <span className="todo-title">
                       {routine.title}
-                      {routine.subject_name && (
-                        <span className="routine-subject">· {routine.subject_name}</span>
+                      {routine.subject_path && (
+                        <span className="routine-subject">· {routine.subject_path}</span>
                       )}
                     </span>
                   </label>
@@ -263,7 +263,7 @@ export default function StudyPage() {
                   <li key={record.id} className="record-item">
                     <div className="record-head">
                       <span className="record-subject">
-                        {subjectMap[record.subject_id]?.name || '과목'}
+                        {record.subject_path || subjectMap[record.subject_id]?.name || '과목'}
                       </span>
                       <span className="record-focus">
                         집중도: {FOCUS_LABELS[record.focus_level - 1]}

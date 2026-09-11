@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
+from app.api.subject_utils import build_subject_paths
 from app.db.session import get_db
 from app.models import StudySession, Subject, User
 from app.schemas.study import StudySessionCreate, StudySessionRead, StudySessionUpdate
@@ -19,19 +20,35 @@ def _validate_owned_subject(subject_id: int, user: User, db: Session) -> None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="과목을 찾을 수 없습니다.")
 
 
+def _to_read(session: StudySession, paths: dict[int, str]) -> StudySessionRead:
+    return StudySessionRead(
+        id=session.id,
+        subject_id=session.subject_id,
+        subject_path=paths.get(session.subject_id),
+        started_at=session.started_at,
+        ended_at=session.ended_at,
+        study_seconds=session.study_seconds,
+        break_seconds=session.break_seconds,
+        focus_level=session.focus_level,
+        memo=session.memo,
+    )
+
+
 @router.get("", response_model=list[StudySessionRead])
 def list_sessions(
     start: date | None = Query(default=None),
     end: date | None = Query(default=None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> list[StudySession]:
+) -> list[StudySessionRead]:
     stmt = select(StudySession).where(StudySession.user_id == current_user.id)
     if start is not None:
         stmt = stmt.where(StudySession.started_at >= start)
     if end is not None:
         stmt = stmt.where(StudySession.started_at <= end)
-    return list(db.scalars(stmt.order_by(StudySession.started_at.desc())))
+    sessions = list(db.scalars(stmt.order_by(StudySession.started_at.desc())))
+    paths = build_subject_paths(current_user.id, db)
+    return [_to_read(s, paths) for s in sessions]
 
 
 @router.post("", response_model=StudySessionRead, status_code=status.HTTP_201_CREATED)
