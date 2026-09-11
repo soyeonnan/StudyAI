@@ -1,0 +1,268 @@
+.calendar-page {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 20px;
+  align-items: start;
+}
+
+.calendar-panel {
+  padding: 20px;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.calendar-month {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.calendar-side {
+  padding: 20px;
+  position: sticky;
+  top: 84px;
+}
+
+.side-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.side-add {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.side-add .field {
+  flex: 1;
+}
+
+/* 할 일 목록 */
+.todo-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.todo-empty {
+  color: var(--text-dim);
+  font-size: 0.88rem;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+
+.todo-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.todo-title {
+  font-size: 0.9rem;
+}
+
+.todo-done .todo-title {
+  text-decoration: line-through;
+  color: var(--text-dim);
+}
+
+/* 배지 점 */
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.badge-dot-schedule {
+  background: var(--primary);
+}
+
+.badge-dot-routine {
+  background: var(--routine);
+}
+
+.badge-dot-record {
+  background: var(--success);
+}
+
+/* 공부 캘린더 전용: 루틴 / 기록 구분 섹션 */
+.study-section {
+  margin-bottom: 22px;
+}
+
+.study-section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.study-section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.study-section-tag {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.tag-routine {
+  background: var(--routine-soft);
+  color: var(--routine);
+}
+
+.tag-record {
+  background: #ecfdf5;
+  color: var(--success);
+}
+
+/* 루틴 아이템 (일정과 다르게 보라 계열) */
+.routine-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--routine-soft);
+  border-radius: 8px;
+  border-left: 3px solid var(--routine);
+}
+
+.routine-item.routine-done .todo-title {
+  text-decoration: line-through;
+  color: var(--text-dim);
+}
+
+/* 공부 캘린더 탭 */
+.study-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  background: var(--bg);
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.study-tab {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: var(--text-dim);
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.study-tab.active {
+  background: var(--surface);
+  color: var(--primary-dark);
+  box-shadow: var(--shadow);
+}
+
+/* 진행률 바 간격 */
+.routine-progress-bar,
+.schedule-progress-bar {
+  margin-bottom: 16px;
+}
+
+.routine-add {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.routine-subject {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  margin-left: 4px;
+}
+
+/* 공부 기록 카드 */
+.record-item {
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 8px;
+  border-left: 3px solid var(--success);
+}
+
+.record-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.record-mini {
+  padding: 4px 10px;
+  font-size: 0.8rem;
+}
+
+.record-add-btn {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.record-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.record-subject {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.record-focus {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.record-times {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.record-memo {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+@media (max-width: 860px) {
+  .calendar-page {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-side {
+    position: static;
+  }
+}

@@ -1,0 +1,29 @@
+# 환경변수 / 시크릿
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.db
+*.sqlite3
+
+# Node / Frontend
+node_modules/
+dist/
+.vite/
+*.local
+
+# OS / 에디터
+.DS_Store
+.idea/
+.vscode/
+
+# Kiro 설정/개발 메모 (공개 레포에 포함하지 않음)
+.kiro/
+
+# 개인 문서 (지원서, 증빙 등) — 혹시 모를 노출 방지
+documents/

@@ -1,0 +1,31 @@
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.calendar-nav-arrow {
+  padding: 8px 12px;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.calendar-nav-selects {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+}
+
+.calendar-nav-select {
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.calendar-nav-today {
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}

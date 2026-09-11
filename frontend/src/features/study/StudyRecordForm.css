@@ -1,0 +1,53 @@
+.record-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: var(--bg);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.record-form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.record-form-row > div {
+  flex: 1;
+}
+
+.record-focus {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.record-focus-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 8px;
+  font-weight: 700;
+  color: var(--text-dim);
+  transition: all 0.15s ease;
+}
+
+.record-focus-btn.active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+}
+
+.record-focus-label {
+  margin-left: 8px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.record-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

@@ -1,0 +1,77 @@
+.subject-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.subject-add-parent {
+  display: flex;
+  gap: 8px;
+}
+
+.subject-add-parent .field {
+  flex: 1;
+}
+
+.subject-tree {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.subject-empty {
+  color: var(--text-dim);
+  font-size: 0.88rem;
+  text-align: center;
+  padding: 16px 0;
+}
+
+.subject-parent {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  background: var(--surface);
+}
+
+.subject-parent-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.subject-parent-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.subject-children {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 8px 12px;
+  padding-left: 10px;
+  border-left: 2px solid var(--border);
+}
+
+.subject-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  color: var(--text-dim);
+}
+
+.subject-add-child {
+  display: flex;
+  gap: 6px;
+  margin-left: 12px;
+}
+
+.subject-add-child .field {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+}

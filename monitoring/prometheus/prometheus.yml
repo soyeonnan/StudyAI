@@ -1,0 +1,15 @@
+# Prometheus 수집 설정.
+# 백엔드 컨테이너의 /metrics 를 주기적으로 긁어온다.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "study-calendar-backend"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["backend:8000"]
+
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
