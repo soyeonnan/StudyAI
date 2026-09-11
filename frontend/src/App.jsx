@@ -10,6 +10,7 @@ import RegisterPage from './pages/RegisterPage.jsx'
 import TimerPage from './pages/TimerPage.jsx'
 import SchedulePage from './pages/SchedulePage.jsx'
 import StudyPage from './pages/StudyPage.jsx'
+import SubjectsPage from './pages/SubjectsPage.jsx'
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
       >
         <Route path="/" element={<DashboardPage />} />
         <Route path="/timer" element={<TimerPage />} />
+        <Route path="/subjects" element={<SubjectsPage />} />
         <Route path="/schedule" element={<SchedulePage />} />
         <Route path="/study" element={<StudyPage />} />
         <Route

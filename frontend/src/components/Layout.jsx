@@ -5,6 +5,7 @@ import './Layout.css'
 
 const NAV_ITEMS = [
   { to: '/timer', label: '타이머' },
+  { to: '/subjects', label: '과목 관리' },
   { to: '/schedule', label: '일정 캘린더' },
   { to: '/study', label: '공부 캘린더' },
 ]

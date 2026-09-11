@@ -17,7 +17,7 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 2px;
 }
 
 .subject-empty {
@@ -27,51 +27,51 @@
   padding: 16px 0;
 }
 
-.subject-parent {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px;
-  background: var(--surface);
-}
-
-.subject-parent-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.subject-parent-name {
-  font-weight: 700;
-  font-size: 0.95rem;
-}
-
-.subject-children {
+.sm-node {
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: 0 0 8px 12px;
-  padding-left: 10px;
-  border-left: 2px solid var(--border);
 }
 
-.subject-child {
+.sm-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.88rem;
-  color: var(--text-dim);
+  gap: 8px;
+  padding: 8px;
+  border-radius: 8px;
 }
 
-.subject-add-child {
+.sm-row:hover {
+  background: var(--bg);
+}
+
+.sm-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.sm-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.sm-mini {
+  padding: 3px 10px;
+  font-size: 0.78rem;
+}
+
+.sm-add-child {
   display: flex;
   gap: 6px;
-  margin-left: 12px;
+  padding: 6px 8px;
 }
 
-.subject-add-child .field {
+.sm-add-child .field {
   flex: 1;
   padding: 6px 10px;
   font-size: 0.85rem;
+}
+
+.sm-children {
+  list-style: none;
 }
