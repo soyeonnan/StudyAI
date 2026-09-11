@@ -1,0 +1,14 @@
+.subjects-page {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.subjects-desc {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+.subjects-card {
+  padding: 22px;
+}

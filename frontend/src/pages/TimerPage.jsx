@@ -1,8 +1,8 @@
 import { useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 
 import { createSession } from '../api/sessions'
-import SubjectManager from '../features/subjects/SubjectManager'
-import SubjectSelect from '../features/subjects/SubjectSelect'
+import SubjectTreePicker from '../features/subjects/SubjectTreePicker'
 import { TimerStatus, useStudyTimer } from '../features/timer/useStudyTimer'
 import { formatClock, formatDuration } from '../lib/time'
 import './TimerPage.css'
@@ -11,9 +11,11 @@ const FOCUS_LABELS = ['매우 낮음', '낮음', '보통', '높음', '매우 높
 
 export default function TimerPage() {
   const timer = useStudyTimer()
-  const [selectedSubjectId, setSelectedSubjectId] = useState(null)
-  const [subjectReloadKey, setSubjectReloadKey] = useState(0)
-  const [showSubjectManager, setShowSubjectManager] = useState(false)
+  const location = useLocation()
+  // 과목 관리 페이지에서 "타이머 시작"으로 넘어오면 해당 과목을 초기 선택한다.
+  const [selectedSubjectId, setSelectedSubjectId] = useState(
+    location.state?.subjectId ?? null,
+  )
 
   // 종료 후 입력받는 정리 정보
   const [focusLevel, setFocusLevel] = useState(3)
@@ -58,28 +60,10 @@ export default function TimerPage() {
         <div className="timer-subject">
           <div className="timer-subject-head">
             <label className="form-label">공부 과목</label>
-            {!isRunning && !isStopped && (
-              <button
-                type="button"
-                className="btn timer-subject-toggle"
-                onClick={() => setShowSubjectManager((v) => !v)}
-              >
-                {showSubjectManager ? '닫기' : '과목 관리'}
-              </button>
-            )}
+            <Link to="/subjects" className="btn timer-subject-toggle">과목 관리</Link>
           </div>
 
-          <SubjectSelect
-            value={selectedSubjectId}
-            onChange={setSelectedSubjectId}
-            reloadKey={subjectReloadKey}
-          />
-
-          {showSubjectManager && !isRunning && !isStopped && (
-            <div className="timer-subject-manager">
-              <SubjectManager onChanged={() => setSubjectReloadKey((k) => k + 1)} />
-            </div>
-          )}
+          <SubjectTreePicker value={selectedSubjectId} onChange={setSelectedSubjectId} />
         </div>
 
         {/* 타이머 표시 */}

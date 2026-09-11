@@ -22,12 +22,14 @@ class SubjectRead(BaseModel):
 
 
 class SubjectTreeNode(BaseModel):
-    """대분류 + 그 아래 소분류 목록(트리 형태)."""
+    """무제한 depth 과목 트리 노드(재귀). children에 하위 노드가 계속 담긴다."""
 
     id: int
     name: str
     color: str
-    children: list[SubjectRead]
+    parent_id: int | None
+    depth: int  # 루트=0
+    children: list["SubjectTreeNode"] = []
 
 
 class StudySessionCreate(BaseModel):
@@ -61,6 +63,7 @@ class StudySessionUpdate(BaseModel):
 class StudySessionRead(BaseModel):
     id: int
     subject_id: int
+    subject_path: str | None = None  # 과목 전체 경로 (예: "CS > 네트워크")
     started_at: datetime
     ended_at: datetime
     study_seconds: int
