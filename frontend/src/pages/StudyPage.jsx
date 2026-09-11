@@ -12,7 +12,7 @@ import {
 } from '../api/routines'
 import ProgressBar from '../components/ProgressBar'
 import StudyRecordForm from '../features/study/StudyRecordForm'
-import SubjectSelect from '../features/subjects/SubjectSelect'
+import SubjectTreePicker from '../features/subjects/SubjectTreePicker'
 import { toPercent } from '../lib/progress'
 import { formatDuration, toDateString } from '../lib/time'
 import { useMonthNavigation } from '../lib/useMonthNavigation'
@@ -200,7 +200,7 @@ export default function StudyPage() {
                 value={newRoutineTitle}
                 onChange={(e) => setNewRoutineTitle(e.target.value)}
               />
-              <SubjectSelect value={newRoutineSubject} onChange={setNewRoutineSubject} allowEmpty />
+              <SubjectTreePicker value={newRoutineSubject} onChange={setNewRoutineSubject} allowEmpty />
               <button type="submit" className="btn btn-primary">루틴 추가</button>
             </form>
 

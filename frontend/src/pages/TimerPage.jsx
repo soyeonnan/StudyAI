@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import { createSession } from '../api/sessions'
 import SubjectManager from '../features/subjects/SubjectManager'
-import SubjectSelect from '../features/subjects/SubjectSelect'
+import SubjectTreePicker from '../features/subjects/SubjectTreePicker'
 import { TimerStatus, useStudyTimer } from '../features/timer/useStudyTimer'
 import { formatClock, formatDuration } from '../lib/time'
 import './TimerPage.css'
@@ -69,7 +69,7 @@ export default function TimerPage() {
             )}
           </div>
 
-          <SubjectSelect
+          <SubjectTreePicker
             value={selectedSubjectId}
             onChange={setSelectedSubjectId}
             reloadKey={subjectReloadKey}
