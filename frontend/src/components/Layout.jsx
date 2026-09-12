@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { to: '/subjects', label: '과목 관리' },
   { to: '/goals', label: '공부 목표' },
   { to: '/planner', label: '오늘 플래너' },
+  { to: '/achievement', label: '달성률' },
   { to: '/schedule', label: '일정 캘린더' },
   { to: '/study', label: '공부 캘린더' },
 ]
