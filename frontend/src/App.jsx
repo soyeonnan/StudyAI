@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 import GoalsPage from './pages/GoalsPage.jsx'
 import GuidesPage from './pages/GuidesPage.jsx'
+import PlannerPage from './pages/PlannerPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import TimerPage from './pages/TimerPage.jsx'
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/timer" element={<TimerPage />} />
         <Route path="/subjects" element={<SubjectsPage />} />
         <Route path="/goals" element={<GoalsPage />} />
+        <Route path="/planner" element={<PlannerPage />} />
         <Route path="/schedule" element={<SchedulePage />} />
         <Route path="/study" element={<StudyPage />} />
         <Route
