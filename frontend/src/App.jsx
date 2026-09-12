@@ -5,6 +5,7 @@ import Layout from './components/Layout.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 import AchievementPage from './pages/AchievementPage.jsx'
+import CommunityPage from './pages/CommunityPage.jsx'
 import GoalsPage from './pages/GoalsPage.jsx'
 import GuidesPage from './pages/GuidesPage.jsx'
 import PlannerPage from './pages/PlannerPage.jsx'
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/goals" element={<GoalsPage />} />
         <Route path="/planner" element={<PlannerPage />} />
         <Route path="/achievement" element={<AchievementPage />} />
+        <Route path="/community" element={<CommunityPage />} />
         <Route path="/schedule" element={<SchedulePage />} />
         <Route path="/study" element={<StudyPage />} />
         <Route

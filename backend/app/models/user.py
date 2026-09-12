@@ -27,3 +27,4 @@ class User(Base):
     schedule_items: Mapped[list["ScheduleItem"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     routines: Mapped[list["RoutineDefinition"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     goals: Mapped[list["Goal"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    posts: Mapped[list["Post"]] = relationship(back_populates="user", cascade="all, delete-orphan")
