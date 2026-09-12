@@ -5,6 +5,7 @@ from app.api.routes import (
     admin,
     analytics,
     auth,
+    community,
     goals,
     planner,
     routines,
@@ -21,5 +22,6 @@ api_router.include_router(schedules.router)
 api_router.include_router(routines.router)
 api_router.include_router(goals.router)
 api_router.include_router(planner.router)
+api_router.include_router(community.router)
 api_router.include_router(analytics.router)
 api_router.include_router(admin.router)
