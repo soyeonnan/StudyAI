@@ -43,3 +43,31 @@ class MonthlyStats(BaseModel):
     subjects: list[SubjectBreakdown]
     routine_done: int
     routine_total: int
+
+
+class WeeklyPoint(BaseModel):
+    """주별 공부량 + 루틴 달성률 (주간 추이 그래프용)."""
+
+    week_start: str  # 그 주 월요일 (ISO date)
+    study_seconds: int
+    routine_done: int
+    routine_total: int
+
+
+class GoalProgressPoint(BaseModel):
+    """목표별 진도 요약."""
+
+    goal_id: int
+    title: str
+    progress: float  # 0.0 ~ 1.0 (단계 기반)
+    is_completed: bool
+
+
+class AchievementStats(BaseModel):
+    """달성률 확장 통계: 주간 추이 + 목표 달성 요약."""
+
+    weeks: list[WeeklyPoint]
+    total_goals: int
+    completed_goals: int
+    active_goals: int
+    goals: list[GoalProgressPoint]
