@@ -4,12 +4,17 @@ import AdminRoute from './components/AdminRoute.jsx'
 import Layout from './components/Layout.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
+import AchievementPage from './pages/AchievementPage.jsx'
+import CommunityPage from './pages/CommunityPage.jsx'
+import GoalsPage from './pages/GoalsPage.jsx'
 import GuidesPage from './pages/GuidesPage.jsx'
+import PlannerPage from './pages/PlannerPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import TimerPage from './pages/TimerPage.jsx'
 import SchedulePage from './pages/SchedulePage.jsx'
 import StudyPage from './pages/StudyPage.jsx'
+import SubjectsPage from './pages/SubjectsPage.jsx'
 
 export default function App() {
   return (
@@ -26,6 +31,11 @@ export default function App() {
       >
         <Route path="/" element={<DashboardPage />} />
         <Route path="/timer" element={<TimerPage />} />
+        <Route path="/subjects" element={<SubjectsPage />} />
+        <Route path="/goals" element={<GoalsPage />} />
+        <Route path="/planner" element={<PlannerPage />} />
+        <Route path="/achievement" element={<AchievementPage />} />
+        <Route path="/community" element={<CommunityPage />} />
         <Route path="/schedule" element={<SchedulePage />} />
         <Route path="/study" element={<StudyPage />} />
         <Route

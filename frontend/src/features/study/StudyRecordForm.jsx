@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import SubjectSelect from '../subjects/SubjectSelect'
+import SubjectTreePicker from '../subjects/SubjectTreePicker'
 import './StudyRecordForm.css'
 
 const FOCUS_LABELS = ['매우 낮음', '낮음', '보통', '높음', '매우 높음']
@@ -51,7 +51,7 @@ export default function StudyRecordForm({ mode, initial = {}, onSubmit, onCancel
     <form className="record-form" onSubmit={handleSubmit}>
       <div>
         <label className="form-label">과목</label>
-        <SubjectSelect value={subjectId} onChange={setSubjectId} />
+        <SubjectTreePicker value={subjectId} onChange={setSubjectId} />
       </div>
 
       <div className="record-form-row">

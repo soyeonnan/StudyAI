@@ -8,10 +8,11 @@
 from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import and_, or_, select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
+from app.api.subject_utils import build_subject_paths
 from app.db.session import get_db
 from app.models import RoutineCompletion, RoutineDefinition, RoutineVersion, Subject, User
 from app.schemas.routine import (
@@ -133,17 +134,14 @@ def list_routines_for_date(
             )
         )
 
-    # 과목명 매핑
-    subject_ids = {v.subject_id for v in matched if v.subject_id is not None}
-    subject_names: dict[int, str] = {}
-    if subject_ids:
-        rows = db.execute(
-            select(Subject.id, Subject.name).where(Subject.id.in_(subject_ids))
-        ).all()
-        subject_names = {row[0]: row[1] for row in rows}
+    # 과목 경로 매핑 (예: "CS > 네트워크"). 이름만 있으면 계층에서 모호하므로 전체 경로 사용.
+    paths = build_subject_paths(current_user.id, db)
 
     result: list[RoutineWithStatus] = []
     for version in matched:
+        full_path = paths.get(version.subject_id) if version.subject_id else None
+        # subject_name은 경로의 마지막 조각(리프 이름)
+        leaf_name = full_path.split(" > ")[-1] if full_path else None
         result.append(
             RoutineWithStatus(
                 definition_id=version.definition_id,
@@ -151,7 +149,8 @@ def list_routines_for_date(
                 title=version.title,
                 weekday_mask=version.weekday_mask,
                 subject_id=version.subject_id,
-                subject_name=subject_names.get(version.subject_id) if version.subject_id else None,
+                subject_name=leaf_name,
+                subject_path=full_path,
                 is_done=version.id in completed_ids,
             )
         )

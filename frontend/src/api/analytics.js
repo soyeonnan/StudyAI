@@ -11,3 +11,11 @@ export async function fetchMonthlyStats(year, month) {
   const { data } = await apiClient.get('/stats/monthly', { params: { year, month } })
   return data
 }
+
+// 달성률 확장: 최근 N주 추이 + 목표 달성 요약
+export async function fetchAchievementStats({ date = null, weeks = 8 } = {}) {
+  const params = { weeks }
+  if (date) params.date = date
+  const { data } = await apiClient.get('/stats/achievement', { params })
+  return data
+}

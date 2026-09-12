@@ -7,7 +7,7 @@
 루틴은 effective date 버전 관리를 따르므로, 각 날짜에 '그 시점 유효했던 버전'을 기준으로 센다.
 """
 from calendar import monthrange
-from datetime import date
+from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, or_, select
@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models import (
+    Goal,
     RoutineCompletion,
     RoutineDefinition,
     RoutineVersion,
@@ -25,10 +26,13 @@ from app.models import (
     User,
 )
 from app.schemas.analytics import (
+    AchievementStats,
     DailyStats,
     DailyStudy,
+    GoalProgressPoint,
     MonthlyStats,
     SubjectBreakdown,
+    WeeklyPoint,
 )
 
 router = APIRouter(prefix="/stats", tags=["analytics"])
@@ -187,4 +191,91 @@ def monthly_stats(
         subjects=subjects,
         routine_done=routine_done_total,
         routine_total=routine_total_total,
+    )
+
+
+def _goal_step_progress(goal: Goal) -> float:
+    """목표의 단계 기반 진도(0~1). 단계가 없으면 0."""
+    total = len(goal.steps)
+    if total == 0:
+        return 0.0
+    done = sum(1 for s in goal.steps if s.is_done)
+    return round(done / total, 4)
+
+
+@router.get("/achievement", response_model=AchievementStats)
+def achievement_stats(
+    date_param: date = Query(default=None, alias="date"),
+    weeks: int = Query(default=8, ge=1, le=26),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> AchievementStats:
+    """달성률 확장 통계: 최근 N주 공부시간·루틴 달성률 추이 + 목표 달성 요약.
+
+    주 시작은 월요일. 기준일이 속한 주부터 과거로 weeks개 주를 집계한다.
+    """
+    today = date_param or date.today()
+    # 기준일이 속한 주의 월요일
+    this_monday = today - timedelta(days=today.weekday())
+
+    weekly: list[WeeklyPoint] = []
+    # 과거→현재 순서로 담기 위해 역순으로 계산 후 뒤집는다.
+    for i in range(weeks):
+        week_start = this_monday - timedelta(weeks=i)
+        week_end = week_start + timedelta(days=6)
+
+        study_seconds = db.scalar(
+            select(func.coalesce(func.sum(StudySession.study_seconds), 0)).where(
+                StudySession.user_id == current_user.id,
+                func.date(StudySession.started_at) >= week_start,
+                func.date(StudySession.started_at) <= week_end,
+            )
+        )
+
+        done_sum = 0
+        total_sum = 0
+        for d in range(7):
+            day = week_start + timedelta(days=d)
+            done, total = _routine_counts_for_date(current_user.id, day, db)
+            done_sum += done
+            total_sum += total
+
+        weekly.append(
+            WeeklyPoint(
+                week_start=week_start.isoformat(),
+                study_seconds=int(study_seconds or 0),
+                routine_done=done_sum,
+                routine_total=total_sum,
+            )
+        )
+
+    weekly.reverse()  # 과거 → 현재
+
+    # 목표 달성 요약
+    goals = db.scalars(
+        select(Goal).where(Goal.user_id == current_user.id).order_by(Goal.created_at.desc())
+    ).all()
+
+    goal_points: list[GoalProgressPoint] = []
+    completed = 0
+    for goal in goals:
+        is_completed = goal.completed_at is not None
+        if is_completed:
+            completed += 1
+        goal_points.append(
+            GoalProgressPoint(
+                goal_id=goal.id,
+                title=goal.title,
+                progress=_goal_step_progress(goal),
+                is_completed=is_completed,
+            )
+        )
+
+    total_goals = len(goals)
+    return AchievementStats(
+        weeks=weekly,
+        total_goals=total_goals,
+        completed_goals=completed,
+        active_goals=total_goals - completed,
+        goals=goal_points,
     )

@@ -66,4 +66,5 @@ class RoutineWithStatus(BaseModel):
     weekday_mask: int
     subject_id: int | None
     subject_name: str | None
+    subject_path: str | None  # 전체 경로 (예: "CS > 네트워크")
     is_done: bool
