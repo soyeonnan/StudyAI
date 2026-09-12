@@ -1,0 +1,144 @@
+.planner-page {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.planner-header {
+  margin-bottom: 20px;
+}
+
+.planner-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.planner-desc {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+.planner-form {
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.planner-form-label {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.planner-form-row {
+  display: flex;
+  gap: 8px;
+}
+
+.planner-form-row .field {
+  flex: 1;
+}
+
+.planner-summary {
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+
+.planner-section {
+  margin-bottom: 24px;
+}
+
+.planner-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.planner-empty {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  padding: 16px 0;
+}
+
+/* 추천 항목 */
+.plan-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.plan-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.plan-item-dim {
+  opacity: 0.6;
+}
+
+.plan-item-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.plan-badge {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent, #3b82f6);
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.plan-step-title {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.plan-goal-title {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+
+.plan-reason {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.plan-est {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+/* 재조정 */
+.rebalance-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rebalance-item {
+  padding: 12px 16px;
+}
+
+.rebalance-goal {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.rebalance-detail {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
