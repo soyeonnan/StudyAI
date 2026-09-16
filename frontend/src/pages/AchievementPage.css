@@ -103,3 +103,60 @@
   padding: 1px 8px;
   border-radius: 999px;
 }
+
+/* === 기간별/우선순위 개편 추가 === */
+
+.achievement-hint {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+/* 시간목표(우선) 강조 */
+.goal-progress-priority {
+  border-left: 3px solid var(--primary);
+  padding-left: 10px;
+}
+
+.goal-progress-badges {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.goal-progress-badge {
+  font-size: 0.7rem;
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+
+.badge-time {
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+.badge-done {
+  background: var(--success);
+  color: #fff;
+}
+
+/* 중요도별 색상 (높을수록 진하게) */
+.badge-imp {
+  background: var(--bg);
+  color: var(--text-dim);
+}
+.badge-imp-4 {
+  background: #fef3c7;
+  color: #b45309;
+}
+.badge-imp-5 {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.goal-progress-note {
+  font-size: 0.76rem;
+  color: var(--text-dim);
+  margin-top: 4px;
+}

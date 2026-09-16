@@ -4,13 +4,16 @@ import { BrowserRouter } from 'react-router-dom'
 
 import App from './App.jsx'
 import { AuthProvider } from './auth/AuthContext.jsx'
+import { ConfirmProvider } from './components/ConfirmProvider.jsx'
 import './styles/index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <ConfirmProvider>
+          <App />
+        </ConfirmProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>,

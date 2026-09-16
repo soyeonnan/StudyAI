@@ -18,6 +18,8 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     display_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    # 커뮤니티에서 노출할 닉네임(선택). 없으면 display_name을 사용한다.
+    nickname: Mapped[str | None] = mapped_column(String(50), nullable=True)
     # 권한: "user"(기본) 또는 "admin". 관리자 전용 학습 가이드 접근 제어에 사용.
     role: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)

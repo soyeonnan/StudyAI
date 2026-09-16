@@ -105,6 +105,36 @@
   background: var(--success);
 }
 
+/* 모두 완료된 일정 표시(초록) */
+.badge-dot-done {
+  background: var(--success);
+}
+
+/* 달력 하단 범례 */
+.calendar-legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.calendar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* 루틴 안내 문구 */
+.routine-hint {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+  padding: 8px 10px;
+  background: var(--routine-soft);
+  border-radius: 8px;
+}
+
 /* 공부 캘린더 전용: 루틴 / 기록 구분 섹션 */
 .study-section {
   margin-bottom: 22px;

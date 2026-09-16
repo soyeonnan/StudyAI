@@ -17,6 +17,7 @@ export default function PlannerPage() {
   const [plan, setPlan] = useState(null)
   const [loading, setLoading] = useState(false)
   const [requested, setRequested] = useState(false)
+  const [showRules, setShowRules] = useState(false)
 
   async function handleGenerate(e) {
     e.preventDefault()
@@ -34,6 +35,17 @@ export default function PlannerPage() {
         <p className="planner-desc">
           가용 시간을 입력하면 마감·중요도·진도를 계산해 오늘 할 일을 추천해요. (규칙 기반)
         </p>
+        <button type="button" className="planner-rules-toggle" onClick={() => setShowRules((v) => !v)}>
+          {showRules ? '추천 규칙 접기 ▲' : '추천이 안 나오나요? 규칙 보기 ▼'}
+        </button>
+        {showRules && (
+          <div className="planner-rules card">
+            <p><strong>추천 대상</strong> — ① 상세 목표의 미완료 단계, ② 간단 시간목표(시간 남을 때 채움).</p>
+            <p><strong>점수</strong> = 중요도(1~5) + 마감 임박도(오늘=5 … 마감없음=1) + 남은 진도(0~2). 높을수록 먼저.</p>
+            <p><strong>추천이 안 나올 때</strong> — 단계형인데 단계가 없거나 모두 완료됨 / 목표를 완료 처리함 / 가용 시간이 너무 작아 예상 시간을 못 넘김.</p>
+            <p className="planner-rules-note">자세한 규칙은 docs/플래너-추천-규칙.md 참고.</p>
+          </div>
+        )}
       </div>
 
       <form className="planner-form card" onSubmit={handleGenerate}>

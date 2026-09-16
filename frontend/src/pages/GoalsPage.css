@@ -173,3 +173,132 @@
 .goal-step-add .field {
   flex: 1;
 }
+
+/* === 2차 UX 개편 추가 === */
+
+.goals-add-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.goal-form-hint {
+  font-size: 0.83rem;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+/* 목표 시간 입력 (시/분) */
+.goal-time-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.goal-time-inputs .field {
+  width: 72px;
+}
+
+.goal-time-inputs span {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+/* 상세 폼 하위 단계 입력 */
+.goal-form-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--primary-soft);
+  border-radius: 10px;
+}
+
+.goal-form-step-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.goal-form-step-row .field {
+  flex: 1;
+}
+
+.goal-add-step-btn {
+  align-self: flex-start;
+  font-size: 0.82rem;
+  padding: 5px 12px;
+}
+
+/* 목표 타겟 태그 강조 */
+.goal-tag-target {
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+/* 액션 토글 메뉴 */
+.goal-actions-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.goal-actions-toggle {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--text-dim);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.goal-actions-toggle:hover {
+  background: var(--bg);
+}
+
+.goal-actions-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+  z-index: 20;
+  overflow: hidden;
+}
+
+.goal-actions-menu button {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
+.goal-actions-menu button:hover {
+  background: var(--bg);
+}
+
+.goal-actions-menu .goal-actions-danger {
+  color: var(--danger);
+}
+
+/* 수정 폼 */
+.goal-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.goal-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

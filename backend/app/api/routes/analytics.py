@@ -268,8 +268,21 @@ def achievement_stats(
                 title=goal.title,
                 progress=_goal_step_progress(goal),
                 is_completed=is_completed,
+                importance=goal.importance,
+                target_type=goal.target_type,
+                target_minutes=goal.target_minutes,
             )
         )
+
+    # 진행 중 목표를 앞에, 그중 시간목표를 우선, 그다음 중요도 높은 순으로 정렬.
+    # (요청: 시간으로 지정한 목표는 시간이 남으면 우선 처리하도록 우선순위/중요도 노출)
+    goal_points.sort(
+        key=lambda g: (
+            g.is_completed,  # 미완료(False)가 먼저
+            g.target_type != "minutes",  # 시간목표(False)가 먼저
+            -g.importance,  # 중요도 높은 순
+        )
+    )
 
     total_goals = len(goals)
     return AchievementStats(

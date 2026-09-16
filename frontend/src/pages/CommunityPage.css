@@ -159,3 +159,30 @@
 .comment-add .field {
   flex: 1;
 }
+
+/* 닉네임 설정 바 */
+.nickname-bar {
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.nickname-view {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.nickname-edit-btn {
+  font-size: 0.8rem;
+  padding: 4px 12px;
+}
+
+.nickname-edit {
+  display: flex;
+  gap: 8px;
+}
+
+.nickname-edit .field {
+  flex: 1;
+}

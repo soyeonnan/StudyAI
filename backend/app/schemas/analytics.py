@@ -61,6 +61,9 @@ class GoalProgressPoint(BaseModel):
     title: str
     progress: float  # 0.0 ~ 1.0 (단계 기반)
     is_completed: bool
+    importance: int  # 1~5
+    target_type: str  # "steps" | "minutes"
+    target_minutes: int  # 시간목표일 때 목표 시간(분)
 
 
 class AchievementStats(BaseModel):

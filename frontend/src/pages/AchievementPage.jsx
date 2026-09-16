@@ -5,7 +5,15 @@ import ProgressBar from '../components/ProgressBar'
 import WeeklyTrendChart from '../features/dashboard/WeeklyTrendChart'
 import './AchievementPage.css'
 
-const WEEK_OPTIONS = [4, 8, 12]
+const IMPORTANCE_LABELS = ['', '아주 낮음', '낮음', '보통', '높음', '아주 높음']
+
+// 기간 프리셋: 라벨 + 주 수
+const PERIOD_OPTIONS = [
+  { label: '최근 4주', weeks: 4 },
+  { label: '최근 8주', weeks: 8 },
+  { label: '최근 12주', weeks: 12 },
+  { label: '최근 26주', weeks: 26 },
+]
 
 export default function AchievementPage() {
   const [weeks, setWeeks] = useState(8)
@@ -33,13 +41,13 @@ export default function AchievementPage() {
       <div className="achievement-header">
         <h2 className="achievement-title">달성률</h2>
         <div className="achievement-weeks">
-          {WEEK_OPTIONS.map((w) => (
+          {PERIOD_OPTIONS.map((opt) => (
             <button
-              key={w}
-              className={`btn achievement-week-btn ${weeks === w ? 'active' : ''}`}
-              onClick={() => setWeeks(w)}
+              key={opt.weeks}
+              className={`btn achievement-week-btn ${weeks === opt.weeks ? 'active' : ''}`}
+              onClick={() => setWeeks(opt.weeks)}
             >
-              최근 {w}주
+              {opt.label}
             </button>
           ))}
         </div>
@@ -50,7 +58,7 @@ export default function AchievementPage() {
       ) : (
         <>
           <section className="achievement-section card">
-            <h3 className="achievement-section-title">주간 추이</h3>
+            <h3 className="achievement-section-title">기간별 추이</h3>
             <WeeklyTrendChart data={stats.weeks} />
           </section>
 
@@ -82,17 +90,39 @@ export default function AchievementPage() {
 
           <section className="achievement-section card">
             <h3 className="achievement-section-title">목표별 진도</h3>
+            <p className="achievement-hint">
+              시간으로 정한 목표를 먼저, 그다음 중요도가 높은 순으로 보여줘요.
+            </p>
             {stats.goals.length === 0 ? (
               <p className="achievement-empty">등록된 목표가 없어요.</p>
             ) : (
               <ul className="goal-progress-list">
                 {stats.goals.map((g) => (
-                  <li key={g.goal_id} className="goal-progress-item">
+                  <li
+                    key={g.goal_id}
+                    className={`goal-progress-item ${g.target_type === 'minutes' && !g.is_completed ? 'goal-progress-priority' : ''}`}
+                  >
                     <div className="goal-progress-head">
                       <span className={g.is_completed ? 'goal-progress-done' : ''}>{g.title}</span>
-                      {g.is_completed && <span className="goal-progress-badge">완료</span>}
+                      <div className="goal-progress-badges">
+                        {g.target_type === 'minutes' && (
+                          <span className="goal-progress-badge badge-time">시간목표</span>
+                        )}
+                        <span className={`goal-progress-badge badge-imp badge-imp-${g.importance}`}>
+                          중요도 {IMPORTANCE_LABELS[g.importance]}
+                        </span>
+                        {g.is_completed && <span className="goal-progress-badge badge-done">완료</span>}
+                      </div>
                     </div>
-                    <ProgressBar percent={Math.round(g.progress * 100)} showText={false} />
+                    <ProgressBar
+                      percent={Math.round(g.progress * 100)}
+                      showText={g.target_type !== 'minutes'}
+                    />
+                    {g.target_type === 'minutes' && (
+                      <p className="goal-progress-note">
+                        목표 {Math.floor(g.target_minutes / 60)}시간 {g.target_minutes % 60}분 · 공부 시간은 추이 그래프에서 확인
+                      </p>
+                    )}
                   </li>
                 ))}
               </ul>

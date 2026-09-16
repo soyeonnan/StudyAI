@@ -11,11 +11,27 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
+from app.core.profanity import contains_profanity
 from app.db.session import get_db
 from app.models import Post, PostComment, PostLike, StudySession, User
-from app.schemas.community import CommentCreate, CommentRead, PostCreate, PostRead
+from app.schemas.community import (
+    CommentCreate,
+    CommentRead,
+    NicknameUpdate,
+    PostCreate,
+    PostRead,
+)
 
 router = APIRouter(prefix="/community", tags=["community"])
+
+
+def _reject_if_profane(text: str) -> None:
+    """비속어가 포함되면 400으로 거부한다(악플 방지)."""
+    if contains_profanity(text):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="비속어가 포함된 내용은 작성할 수 없어요. 서로 존중하는 표현으로 부탁해요.",
+        )
 
 
 def _get_post(post_id: int, db: Session) -> Post:
@@ -26,7 +42,10 @@ def _get_post(post_id: int, db: Session) -> Post:
 
 
 def _author_name(user: User | None) -> str:
-    return user.display_name if user else "탈퇴한 사용자"
+    """커뮤니티 표시 이름: 닉네임이 있으면 닉네임, 없으면 이름."""
+    if user is None:
+        return "탈퇴한 사용자"
+    return user.nickname or user.display_name
 
 
 def _like_count(post_id: int, db: Session) -> int:
@@ -106,6 +125,7 @@ def create_post(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> PostRead:
+    _reject_if_profane(payload.content)
     # 공부기록을 연결하는 경우 본인 소유 세션만 허용
     if payload.session_id is not None:
         session = db.get(StudySession, payload.session_id)
@@ -162,6 +182,7 @@ def create_comment(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> PostRead:
+    _reject_if_profane(payload.content)
     post = _get_post(post_id, db)
     comment = PostComment(post_id=post_id, user_id=current_user.id, content=payload.content)
     db.add(comment)
@@ -184,3 +205,33 @@ def delete_comment(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="본인 댓글만 삭제할 수 있습니다.")
     db.delete(comment)
     db.commit()
+
+
+@router.get("/nickname")
+def get_nickname(
+    current_user: User = Depends(get_current_user),
+) -> dict[str, str]:
+    """현재 사용자의 커뮤니티 표시 이름(닉네임 우선)을 반환한다."""
+    return {
+        "nickname": current_user.nickname or "",
+        "display_name": current_user.display_name,
+        "effective_name": current_user.nickname or current_user.display_name,
+    }
+
+
+@router.put("/nickname")
+def set_nickname(
+    payload: NicknameUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict[str, str]:
+    """커뮤니티 닉네임을 설정/변경한다. 빈 값이면 이름(display_name)으로 되돌린다."""
+    nickname = (payload.nickname or "").strip()
+    if nickname:
+        _reject_if_profane(nickname)
+        current_user.nickname = nickname
+    else:
+        current_user.nickname = None
+    db.commit()
+    db.refresh(current_user)
+    return {"effective_name": current_user.nickname or current_user.display_name}

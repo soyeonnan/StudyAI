@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 
 import CalendarGrid from '../components/CalendarGrid'
 import CalendarHeader from '../components/CalendarHeader'
+import { useConfirm } from '../components/ConfirmProvider'
 import { createSession, deleteSession, fetchSessions, updateSession } from '../api/sessions'
 import { fetchSubjects } from '../api/subjects'
 import {
@@ -23,6 +24,7 @@ const FOCUS_LABELS = ['매우 낮음', '낮음', '보통', '높음', '매우 높
 export default function StudyPage() {
   const nav = useMonthNavigation()
   const { year, month, range } = nav
+  const confirm = useConfirm()
   const [selectedDate, setSelectedDate] = useState(toDateString(new Date()))
   const [activeTab, setActiveTab] = useState('routine') // 'routine' | 'record'
 
@@ -95,8 +97,15 @@ export default function StudyPage() {
     )
   }
 
-  async function handleDeleteRoutine(definitionId) {
-    await deleteRoutine(definitionId)
+  async function handleDeleteRoutine(routine) {
+    const ok = await confirm({
+      title: '루틴 삭제',
+      message: `"${routine.title}" 루틴을 삭제할까요? 오늘부터 나타나지 않지만 지난 기록은 보존됩니다.`,
+      confirmText: '삭제',
+      danger: true,
+    })
+    if (!ok) return
+    await deleteRoutine(routine.definition_id)
     loadRoutines()
   }
 
@@ -136,6 +145,13 @@ export default function StudyPage() {
   }
 
   async function handleDeleteRecord(recordId) {
+    const ok = await confirm({
+      title: '기록 삭제',
+      message: '이 공부 기록을 삭제할까요?',
+      confirmText: '삭제',
+      danger: true,
+    })
+    if (!ok) return
     await deleteSession(recordId)
     loadMonth()
   }
@@ -226,7 +242,7 @@ export default function StudyPage() {
                   </label>
                   <button
                     className="btn btn-danger"
-                    onClick={() => handleDeleteRoutine(routine.definition_id)}
+                    onClick={() => handleDeleteRoutine(routine)}
                   >
                     삭제
                   </button>
