@@ -43,8 +43,20 @@ def _progress_score(progress: float) -> int:
     return round((1 - progress) * 2)
 
 
+# 시간목표 항목이 하루에 채우기를 권장하는 기본 조각 시간(분).
+# 목표 시간이 이보다 크면 이 크기로 잘라 오늘 분량으로 제안한다.
+TIME_GOAL_CHUNK_MINUTES = 60
+
+
 def _goal_progress(goal: Goal) -> float:
-    """목표 진도(0~1). 단계 기반으로 계산한다(추천 대상이 단계이므로)."""
+    """목표 진도(0~1).
+
+    - 단계형(steps): 완료 단계 / 전체 단계
+    - 시간형(minutes): 진도는 여기선 0으로 둔다(공부 시간 집계는 달성률에서 별도 계산).
+      플래너에서는 '아직 남았다'고 보고 후보에 포함시키는 것이 목적이다.
+    """
+    if goal.target_type == "minutes":
+        return 0.0
     total = len(goal.steps)
     if total == 0:
         return 0.0
@@ -53,10 +65,14 @@ def _goal_progress(goal: Goal) -> float:
 
 
 def build_candidates(goals: list[Goal], today: date, paths: dict[int, str]) -> list[PlannerItem]:
-    """미완료 단계들을 점수화해 정렬된 후보 목록으로 만든다.
+    """미완료 항목들을 점수화해 정렬된 후보 목록으로 만든다.
 
-    완료 처리된 목표나 이미 완료된 단계는 제외한다. 동점이면
-    마감 빠른 순 → goal_id → step order 순으로 안정 정렬한다.
+    - 단계형 목표: 미완료 단계 각각을 후보로.
+    - 시간형 목표: 목표 자체를 하나의 후보로(step_id=0). "시간이 남으면 채우는" 용도라
+      우선순위 계산에 포함하되, 예상시간은 목표시간을 조각(chunk) 크기로 자른다.
+
+    완료 처리된 목표나 이미 완료된 단계는 제외한다.
+    동점이면 마감 빠른 순 → goal_id → order 순으로 안정 정렬한다.
     """
     candidates: list[tuple[tuple, PlannerItem]] = []
 
@@ -74,8 +90,29 @@ def build_candidates(goals: list[Goal], today: date, paths: dict[int, str]) -> l
         due_text = f"마감 {days_left}일 남음" if days_left is not None else "마감 없음"
         if days_left is not None and days_left < 0:
             due_text = f"마감 {abs(days_left)}일 지남"
-        reason = f"중요도 {importance_pts}, {due_text}, 진도 {round(progress * 100)}%"
+        subject_path = paths.get(goal.subject_id) if goal.subject_id else None
 
+        if goal.target_type == "minutes":
+            # 시간형: 목표 자체를 오늘 분량으로 제안(조각 크기 또는 목표 시간 중 작은 값).
+            est = min(goal.target_minutes, TIME_GOAL_CHUNK_MINUTES) if goal.target_minutes > 0 else TIME_GOAL_CHUNK_MINUTES
+            reason = f"시간 목표 · 중요도 {importance_pts}, {due_text}"
+            item = PlannerItem(
+                goal_id=goal.id,
+                goal_title=goal.title,
+                step_id=0,  # 0 = 시간형 목표(단계 없음)
+                step_title=f"{goal.title} 공부",
+                subject_path=subject_path,
+                estimated_minutes=est,
+                score=score,
+                reason=reason,
+            )
+            due_key = days_left if days_left is not None else 10**6
+            sort_key = (-score, due_key, goal.id, 0, 0)
+            candidates.append((sort_key, item))
+            continue
+
+        # 단계형: 미완료 단계 각각
+        reason = f"중요도 {importance_pts}, {due_text}, 진도 {round(progress * 100)}%"
         for step in goal.steps:
             if step.is_done:
                 continue
@@ -85,12 +122,11 @@ def build_candidates(goals: list[Goal], today: date, paths: dict[int, str]) -> l
                 goal_title=goal.title,
                 step_id=step.id,
                 step_title=step.title,
-                subject_path=paths.get(goal.subject_id) if goal.subject_id else None,
+                subject_path=subject_path,
                 estimated_minutes=est,
                 score=score,
                 reason=reason,
             )
-            # 정렬 키: 점수 내림차순 → 마감 빠른 순 → goal_id → step order
             due_key = days_left if days_left is not None else 10**6
             sort_key = (-score, due_key, goal.id, step.order_index, step.id)
             candidates.append((sort_key, item))

@@ -142,3 +142,32 @@
   font-size: 0.82rem;
   color: var(--text-dim);
 }
+
+/* 추천 규칙 안내 (접이식) */
+.planner-rules-toggle {
+  margin-top: 8px;
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.82rem;
+  padding: 0;
+}
+
+.planner-rules {
+  margin-top: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.planner-rules strong {
+  color: var(--primary-dark);
+}
+
+.planner-rules-note {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
