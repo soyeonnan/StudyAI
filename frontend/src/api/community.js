@@ -40,3 +40,15 @@ export async function createComment(postId, content) {
 export async function deleteComment(postId, commentId) {
   await apiClient.delete(`/community/posts/${postId}/comments/${commentId}`)
 }
+
+// 커뮤니티 닉네임 조회
+export async function fetchNickname() {
+  const { data } = await apiClient.get('/community/nickname')
+  return data
+}
+
+// 커뮤니티 닉네임 설정/변경 (빈 값이면 이름으로 되돌림)
+export async function setNickname(nickname) {
+  const { data } = await apiClient.put('/community/nickname', { nickname })
+  return data
+}

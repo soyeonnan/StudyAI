@@ -5,11 +5,14 @@ import {
   createPost,
   deleteComment,
   deletePost,
+  fetchNickname,
   fetchPost,
   fetchPosts,
+  setNickname,
   toggleLike,
 } from '../api/community'
 import { useAuth } from '../auth/AuthContext'
+import { useConfirm } from '../components/ConfirmProvider'
 import './CommunityPage.css'
 
 // ISO 시각을 "9/12 14:30" 형태로
@@ -19,11 +22,22 @@ function formatDateTime(iso) {
   return `${d.getMonth() + 1}/${d.getDate()} ${time}`
 }
 
+// 서버 에러 메시지(detail)를 추출한다.
+function errorDetail(err, fallback) {
+  return err?.response?.data?.detail || fallback
+}
+
 export default function CommunityPage() {
   const { user } = useAuth()
+  const confirm = useConfirm()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [newContent, setNewContent] = useState('')
+
+  // 닉네임 상태
+  const [effectiveName, setEffectiveName] = useState('')
+  const [nicknameInput, setNicknameInput] = useState('')
+  const [editingNick, setEditingNick] = useState(false)
 
   // 펼쳐진 글 상세 { [postId]: postDetail }
   const [details, setDetails] = useState({})
@@ -36,20 +50,60 @@ export default function CommunityPage() {
     setLoading(false)
   }, [])
 
+  const loadNickname = useCallback(async () => {
+    const data = await fetchNickname()
+    setEffectiveName(data.effective_name)
+    setNicknameInput(data.nickname)
+  }, [])
+
   useEffect(() => {
     load()
-  }, [load])
+    loadNickname()
+  }, [load, loadNickname])
 
+  // 서버 검증 실패(욕설 등)를 알림으로 안내한다.
+  async function notifyError(err, fallback) {
+    await confirm({
+      title: '작성할 수 없어요',
+      message: errorDetail(err, fallback),
+      confirmText: '알겠어요',
+      cancelText: '닫기',
+    })
+  }
+
+  // ---- 닉네임 ----
+  async function handleSaveNickname() {
+    try {
+      const data = await setNickname(nicknameInput.trim())
+      setEffectiveName(data.effective_name)
+      setEditingNick(false)
+    } catch (err) {
+      await notifyError(err, '닉네임을 저장할 수 없어요.')
+    }
+  }
+
+  // ---- 글 ----
   async function handleCreatePost(e) {
     e.preventDefault()
     const content = newContent.trim()
     if (!content) return
-    await createPost({ content })
-    setNewContent('')
-    load()
+    try {
+      await createPost({ content })
+      setNewContent('')
+      load()
+    } catch (err) {
+      await notifyError(err, '글을 작성할 수 없어요.')
+    }
   }
 
   async function handleDeletePost(postId) {
+    const ok = await confirm({
+      title: '글 삭제',
+      message: '이 인증글과 달린 댓글이 모두 삭제됩니다. 계속할까요?',
+      confirmText: '삭제',
+      danger: true,
+    })
+    if (!ok) return
     await deletePost(postId)
     setDetails((prev) => {
       const next = { ...prev }
@@ -61,7 +115,6 @@ export default function CommunityPage() {
 
   async function handleToggleLike(postId) {
     const updated = await toggleLike(postId)
-    // 목록의 좋아요 수/상태 갱신
     setPosts((prev) =>
       prev.map((p) =>
         p.id === postId
@@ -87,16 +140,26 @@ export default function CommunityPage() {
   async function handleAddComment(postId) {
     const content = (commentInputs[postId] || '').trim()
     if (!content) return
-    const detail = await createComment(postId, content)
-    setDetails((prev) => ({ ...prev, [postId]: detail }))
-    setCommentInputs((prev) => ({ ...prev, [postId]: '' }))
-    // 목록의 댓글 수 갱신
-    setPosts((prev) =>
-      prev.map((p) => (p.id === postId ? { ...p, comment_count: detail.comment_count } : p)),
-    )
+    try {
+      const detail = await createComment(postId, content)
+      setDetails((prev) => ({ ...prev, [postId]: detail }))
+      setCommentInputs((prev) => ({ ...prev, [postId]: '' }))
+      setPosts((prev) =>
+        prev.map((p) => (p.id === postId ? { ...p, comment_count: detail.comment_count } : p)),
+      )
+    } catch (err) {
+      await notifyError(err, '댓글을 작성할 수 없어요.')
+    }
   }
 
   async function handleDeleteComment(postId, commentId) {
+    const ok = await confirm({
+      title: '댓글 삭제',
+      message: '이 댓글을 삭제할까요?',
+      confirmText: '삭제',
+      danger: true,
+    })
+    if (!ok) return
     await deleteComment(postId, commentId)
     const detail = await fetchPost(postId)
     setDetails((prev) => ({ ...prev, [postId]: detail }))
@@ -112,10 +175,32 @@ export default function CommunityPage() {
         <p className="community-desc">오늘 공부한 내용을 인증하고 서로 응원해요.</p>
       </div>
 
+      {/* 닉네임 설정 */}
+      <div className="nickname-bar card">
+        {editingNick ? (
+          <div className="nickname-edit">
+            <input
+              className="field"
+              placeholder="커뮤니티에서 쓸 닉네임 (비우면 이름 사용)"
+              value={nicknameInput}
+              onChange={(e) => setNicknameInput(e.target.value)}
+              maxLength={50}
+            />
+            <button className="btn btn-primary" onClick={handleSaveNickname}>저장</button>
+            <button className="btn" onClick={() => setEditingNick(false)}>취소</button>
+          </div>
+        ) : (
+          <div className="nickname-view">
+            <span>내 닉네임: <strong>{effectiveName}</strong></span>
+            <button className="btn nickname-edit-btn" onClick={() => setEditingNick(true)}>닉네임 변경</button>
+          </div>
+        )}
+      </div>
+
       <form className="post-form card" onSubmit={handleCreatePost}>
         <textarea
           className="field post-form-input"
-          placeholder="오늘의 공부를 인증해 보세요."
+          placeholder="오늘의 공부를 인증해 보세요. (비속어는 작성할 수 없어요)"
           value={newContent}
           onChange={(e) => setNewContent(e.target.value)}
           maxLength={2000}

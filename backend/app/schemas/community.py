@@ -9,6 +9,11 @@ class PostCreate(BaseModel):
     session_id: int | None = None  # 연결할 공부기록(선택)
 
 
+class NicknameUpdate(BaseModel):
+    # 빈 문자열이면 닉네임 해제(이름 사용). 최대 50자.
+    nickname: str = Field(default="", max_length=50)
+
+
 class CommentCreate(BaseModel):
     content: str = Field(min_length=1, max_length=1000)
 
