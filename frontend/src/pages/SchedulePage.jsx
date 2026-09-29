@@ -21,9 +21,12 @@ import { toDateString } from '../lib/time'
 import { useMonthNavigation } from '../lib/useMonthNavigation'
 import './CalendarPage.css'
 
+// 일정 색상 팔레트
+const SCHEDULE_COLORS = ['#3b82f6', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6', '#ec4899']
+
 export default function SchedulePage() {
   const nav = useMonthNavigation()
-  const { year, month, range } = nav
+  const { year, month, range, goToMonthOf } = nav
   const confirm = useConfirm()
 
   const [selectedDate, setSelectedDate] = useState(toDateString(new Date()))
@@ -33,7 +36,15 @@ export default function SchedulePage() {
   const [routines, setRoutines] = useState([]) // 선택 날짜의 루틴
 
   const [newTitle, setNewTitle] = useState('')
+  const [newColor, setNewColor] = useState(SCHEDULE_COLORS[0])
   const [newRoutineTitle, setNewRoutineTitle] = useState('')
+
+  // 날짜 선택: 다른 달 칸을 누르면 그 달로 이동한다.
+  function handleSelectDate(dateStr) {
+    setSelectedDate(dateStr)
+    const clickedMonth = Number(dateStr.split('-')[1]) - 1
+    if (clickedMonth !== month) goToMonthOf(dateStr)
+  }
 
   const loadItems = useCallback(async () => {
     const data = await fetchSchedules({ start: range.start, end: range.end })
@@ -53,16 +64,23 @@ export default function SchedulePage() {
     loadRoutines()
   }, [loadRoutines])
 
-  // ---- 개별 일정 ----
+  // ---- 선택 날짜 데이터 ----
   const itemsForSelected = items.filter((it) => it.scheduled_date === selectedDate)
-  const doneCount = itemsForSelected.filter((it) => it.is_done).length
-  const donePercent = toPercent(doneCount, itemsForSelected.length)
+  const scheduleDone = itemsForSelected.filter((it) => it.is_done).length
+  const routineDone = routines.filter((r) => r.is_done).length
+  const routineTotal = routines.length
 
+  // 개별 일정 + 루틴을 합친 통합 완료율
+  const totalCount = itemsForSelected.length + routineTotal
+  const totalDone = scheduleDone + routineDone
+  const totalPercent = toPercent(totalDone, totalCount)
+
+  // ---- 개별 일정 ----
   async function handleAdd(e) {
     e.preventDefault()
     const title = newTitle.trim()
     if (!title) return
-    await createSchedule({ title, scheduledDate: selectedDate })
+    await createSchedule({ title, scheduledDate: selectedDate, color: newColor })
     setNewTitle('')
     loadItems()
   }
@@ -85,10 +103,6 @@ export default function SchedulePage() {
   }
 
   // ---- 루틴 (반복되어 다른 날에도 따라옴) ----
-  const routineDone = routines.filter((r) => r.is_done).length
-  const routineTotal = routines.length
-  const routinePercent = toPercent(routineDone, routineTotal)
-
   async function handleAddRoutine(e) {
     e.preventDefault()
     const title = newRoutineTitle.trim()
@@ -122,17 +136,25 @@ export default function SchedulePage() {
     loadRoutines()
   }
 
-  // 날짜 칸 배지: 개별 일정 유무 + 모두 완료 여부로 색상 구분
+  // 날짜 칸 배지: 그날 일정 개수만큼 색상 점을 찍는다(완료된 건 흐리게).
   function renderBadge(dateStr) {
     const dayItems = items.filter((it) => it.scheduled_date === dateStr)
     if (dayItems.length === 0) return null
-    const allDone = dayItems.every((it) => it.is_done)
-    // 모두 완료면 초록, 아니면 파랑 점
+    // 최대 4개까지 점으로, 그 이상은 +N
+    const shown = dayItems.slice(0, 4)
+    const extra = dayItems.length - shown.length
     return (
-      <span
-        className={`badge-dot ${allDone ? 'badge-dot-done' : 'badge-dot-schedule'}`}
-        title={allDone ? `일정 ${dayItems.length}개 모두 완료` : `일정 ${dayItems.length}개`}
-      />
+      <>
+        {shown.map((it) => (
+          <span
+            key={it.id}
+            className={`badge-dot ${it.is_done ? 'badge-dot-faded' : ''}`}
+            style={{ background: it.color }}
+            title={`${it.title}${it.is_done ? ' (완료)' : ''}`}
+          />
+        ))}
+        {extra > 0 && <span className="badge-more">+{extra}</span>}
+      </>
     )
   }
 
@@ -144,17 +166,28 @@ export default function SchedulePage() {
           year={year}
           month={month}
           selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
+          onSelectDate={handleSelectDate}
           renderBadge={renderBadge}
         />
         <div className="calendar-legend">
-          <span><span className="badge-dot badge-dot-schedule" /> 진행 중</span>
-          <span><span className="badge-dot badge-dot-done" /> 모두 완료</span>
+          <span>일정마다 지정한 색으로 표시돼요. 완료한 일정은 흐리게 보여요.</span>
         </div>
       </div>
 
       <div className="calendar-side card">
         <h3 className="side-title">{selectedDate}</h3>
+
+        {/* 개별 + 루틴 통합 완료율 */}
+        {totalCount > 0 && (
+          <div className="schedule-progress-bar">
+            <ProgressBar
+              percent={totalPercent}
+              done={totalDone}
+              total={totalCount}
+              label="오늘 완료 (일정+루틴)"
+            />
+          </div>
+        )}
 
         {/* 개별 일정 / 루틴 탭 */}
         <div className="study-tabs">
@@ -162,34 +195,43 @@ export default function SchedulePage() {
             className={`study-tab ${activeTab === 'single' ? 'active' : ''}`}
             onClick={() => setActiveTab('single')}
           >
-            개별 일정
+            개별 일정 {itemsForSelected.length > 0 && `(${scheduleDone}/${itemsForSelected.length})`}
           </button>
           <button
             className={`study-tab ${activeTab === 'routine' ? 'active' : ''}`}
             onClick={() => setActiveTab('routine')}
           >
-            루틴
+            루틴 {routineTotal > 0 && `(${routineDone}/${routineTotal})`}
           </button>
         </div>
 
-        {/* 개별 일정 탭: 그날 하루만의 일정 */}
+        {/* 개별 일정 탭 */}
         {activeTab === 'single' && (
           <div className="study-section">
-            <form className="side-add" onSubmit={handleAdd}>
-              <input
-                className="field"
-                placeholder="이 날의 일정 (예: 병원 예약)"
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-              />
-              <button type="submit" className="btn btn-primary">추가</button>
-            </form>
-
-            {itemsForSelected.length > 0 && (
-              <div className="schedule-progress-bar">
-                <ProgressBar percent={donePercent} done={doneCount} total={itemsForSelected.length} label="완료한 일정" />
+            <form className="schedule-add-form" onSubmit={handleAdd}>
+              <div className="side-add">
+                <input
+                  className="field"
+                  placeholder="이 날의 일정 (예: 병원 예약)"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                />
+                <button type="submit" className="btn btn-primary">추가</button>
               </div>
-            )}
+              {/* 색상 선택 */}
+              <div className="color-picker">
+                {SCHEDULE_COLORS.map((c) => (
+                  <button
+                    type="button"
+                    key={c}
+                    className={`color-swatch ${newColor === c ? 'color-swatch-active' : ''}`}
+                    style={{ background: c }}
+                    onClick={() => setNewColor(c)}
+                    title="일정 색상"
+                  />
+                ))}
+              </div>
+            </form>
 
             <ul className="todo-list">
               {itemsForSelected.length === 0 && <li className="todo-empty">이 날의 개별 일정이 없어요.</li>}
@@ -197,6 +239,7 @@ export default function SchedulePage() {
                 <li key={item.id} className={`todo-item ${item.is_done ? 'todo-done' : ''}`}>
                   <label className="todo-check">
                     <input type="checkbox" checked={item.is_done} onChange={() => handleToggle(item)} />
+                    <span className="schedule-color-tag" style={{ background: item.color }} />
                     <span className="todo-title">{item.title}</span>
                   </label>
                   <button className="btn btn-danger" onClick={() => handleDelete(item)}>삭제</button>
@@ -206,7 +249,7 @@ export default function SchedulePage() {
           </div>
         )}
 
-        {/* 루틴 탭: 만들어두면 다른 날에도 반복되어 따라옴 */}
+        {/* 루틴 탭 */}
         {activeTab === 'routine' && (
           <div className="study-section">
             <p className="routine-hint">
@@ -221,12 +264,6 @@ export default function SchedulePage() {
               />
               <button type="submit" className="btn btn-primary">루틴 추가</button>
             </form>
-
-            {routineTotal > 0 && (
-              <div className="routine-progress-bar">
-                <ProgressBar percent={routinePercent} done={routineDone} total={routineTotal} label="이 날의 루틴" />
-              </div>
-            )}
 
             <ul className="todo-list">
               {routines.length === 0 && <li className="todo-empty">이 날짜에 예정된 루틴이 없어요.</li>}
