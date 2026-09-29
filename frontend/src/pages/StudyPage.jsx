@@ -8,13 +8,14 @@ import { fetchSubjects } from '../api/subjects'
 import {
   createRoutine,
   deleteRoutine,
+  fetchRoutineMonthSummary,
   fetchRoutinesForDate,
   toggleRoutine,
 } from '../api/routines'
 import ProgressBar from '../components/ProgressBar'
 import StudyRecordForm from '../features/study/StudyRecordForm'
 import SubjectTreePicker from '../features/subjects/SubjectTreePicker'
-import { toPercent } from '../lib/progress'
+import { progressColor, toPercent } from '../lib/progress'
 import { formatDuration, toDateString } from '../lib/time'
 import { useMonthNavigation } from '../lib/useMonthNavigation'
 import './CalendarPage.css'
@@ -23,14 +24,23 @@ const FOCUS_LABELS = ['매우 낮음', '낮음', '보통', '높음', '매우 높
 
 export default function StudyPage() {
   const nav = useMonthNavigation()
-  const { year, month, range } = nav
+  const { year, month, range, goToMonthOf } = nav
   const confirm = useConfirm()
   const [selectedDate, setSelectedDate] = useState(toDateString(new Date()))
+
+  // 날짜 선택: 다른 달 칸을 누르면 그 달로 이동한다.
+  function handleSelectDate(dateStr) {
+    setSelectedDate(dateStr)
+    const clickedMonth = Number(dateStr.split('-')[1]) - 1
+    if (clickedMonth !== month) goToMonthOf(dateStr)
+  }
   const [activeTab, setActiveTab] = useState('routine') // 'routine' | 'record'
 
   const [sessions, setSessions] = useState([])
   const [subjects, setSubjects] = useState([])
   const [routines, setRoutines] = useState([])
+  // 날짜별 루틴 진행 요약 { 'YYYY-MM-DD': { done, total, todo } }
+  const [routineSummary, setRoutineSummary] = useState({})
 
   // 루틴 추가 입력
   const [newRoutineTitle, setNewRoutineTitle] = useState('')
@@ -41,13 +51,15 @@ export default function StudyPage() {
   const [editingRecordId, setEditingRecordId] = useState(null)
 
   const loadMonth = useCallback(async () => {
-    const [sessionData, subjectData] = await Promise.all([
+    const [sessionData, subjectData, summaryData] = await Promise.all([
       fetchSessions({ start: range.start, end: range.end }),
       fetchSubjects(),
+      fetchRoutineMonthSummary(year, month + 1), // month는 0-based → +1
     ])
     setSessions(sessionData)
     setSubjects(subjectData)
-  }, [range.start, range.end])
+    setRoutineSummary(Object.fromEntries(summaryData.map((s) => [s.date, s])))
+  }, [range.start, range.end, year, month])
 
   const loadRoutines = useCallback(async () => {
     const data = await fetchRoutinesForDate(selectedDate)
@@ -83,6 +95,7 @@ export default function StudyPage() {
     setNewRoutineTitle('')
     setNewRoutineSubject(null)
     loadRoutines()
+    loadMonth() // 달력 요약 갱신
   }
 
   async function handleToggleRoutine(routine) {
@@ -95,6 +108,7 @@ export default function StudyPage() {
         r.definition_id === routine.definition_id ? { ...r, is_done: !r.is_done } : r,
       ),
     )
+    loadMonth() // 달력 요약 갱신
   }
 
   async function handleDeleteRoutine(routine) {
@@ -107,6 +121,7 @@ export default function StudyPage() {
     if (!ok) return
     await deleteRoutine(routine.definition_id)
     loadRoutines()
+    loadMonth() // 달력 요약 갱신
   }
 
   // ---- 공부 기록 ----
@@ -156,11 +171,31 @@ export default function StudyPage() {
     loadMonth()
   }
 
-  // 날짜 칸 배지: 공부 기록(초록) + 루틴 완료(보라) 표시
+  // 날짜 칸 배지: 루틴 진행 단계를 완료율 색상 막대로, 공부 기록은 초록 점으로 표시.
   function renderBadge(dateStr) {
     const hasRecord = sessions.some((s) => toDateString(new Date(s.started_at)) === dateStr)
-    if (!hasRecord) return null
-    return <span className="badge-dot badge-dot-record" title="공부 기록 있음" />
+    const summary = routineSummary[dateStr]
+
+    const parts = []
+
+    if (summary && summary.total > 0) {
+      const percent = toPercent(summary.done, summary.total)
+      const color = progressColor(percent)
+      parts.push(
+        <span
+          key="routine"
+          className="routine-progress-mini"
+          title={`루틴 ${summary.done}/${summary.total}${summary.todo?.length ? ` · 할 일: ${summary.todo.join(', ')}` : ''}`}
+        >
+          <span className="routine-progress-mini-fill" style={{ width: `${percent}%`, background: color }} />
+        </span>,
+      )
+    }
+    if (hasRecord) {
+      parts.push(<span key="record" className="badge-dot badge-dot-record" title="공부 기록 있음" />)
+    }
+
+    return parts.length > 0 ? <>{parts}</> : null
   }
 
   return (
@@ -171,7 +206,7 @@ export default function StudyPage() {
           year={year}
           month={month}
           selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
+          onSelectDate={handleSelectDate}
           renderBadge={renderBadge}
         />
       </div>

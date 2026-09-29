@@ -5,10 +5,11 @@
 - 날짜별 조회: 그 날짜에 유효했던 버전 + 요일 매칭 + 완료 여부
 - 토글: 그 날짜에 유효한 버전에 완료 기록 (version_id로 고정)
 """
+from calendar import monthrange
 from datetime import date, datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import or_, select
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -302,3 +303,62 @@ def toggle_routine_completion(
     elif not payload.done and existing is not None:
         db.delete(existing)
         db.commit()
+
+
+@router.get("/summary/{year}/{month}")
+def routine_month_summary(
+    year: int,
+    month: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    """해당 월의 날짜별 루틴 진행 요약을 반환한다.
+
+    각 날짜에 유효+요일 매칭되는 루틴 수(total)와 완료 수(done),
+    그리고 아직 안 한 루틴 제목(미리보기, 최대 2개)을 담는다.
+    공부 캘린더 달력에서 날짜별 진행 단계를 색상으로 보여주기 위함이다.
+    """
+    last_dom = monthrange(year, month)[1]
+    result: list[dict] = []
+
+    for d in range(1, last_dom + 1):
+        target = date(year, month, d)
+        bit = _weekday_bit(target)
+
+        versions = db.scalars(
+            select(RoutineVersion)
+            .join(RoutineDefinition, RoutineVersion.definition_id == RoutineDefinition.id)
+            .where(
+                RoutineDefinition.user_id == current_user.id,
+                RoutineVersion.effective_from <= target,
+                or_(RoutineVersion.effective_to.is_(None), RoutineVersion.effective_to >= target),
+            )
+        ).all()
+
+        matched = [v for v in versions if v.weekday_mask & bit]
+        total = len(matched)
+        if total == 0:
+            continue
+
+        version_ids = [v.id for v in matched]
+        completed_ids = set(
+            db.scalars(
+                select(RoutineCompletion.version_id).where(
+                    RoutineCompletion.completed_date == target,
+                    RoutineCompletion.version_id.in_(version_ids),
+                )
+            )
+        )
+        done = len(completed_ids)
+        todo_titles = [v.title for v in matched if v.id not in completed_ids][:2]
+
+        result.append(
+            {
+                "date": target.isoformat(),
+                "done": done,
+                "total": total,
+                "todo": todo_titles,
+            }
+        )
+
+    return result
