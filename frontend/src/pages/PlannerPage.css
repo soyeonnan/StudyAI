@@ -171,3 +171,14 @@
   color: var(--text-dim);
   font-size: 0.78rem;
 }
+
+/* 과목 기반 추천 토글 */
+.planner-subject-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  cursor: pointer;
+}

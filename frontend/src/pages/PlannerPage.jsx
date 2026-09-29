@@ -14,6 +14,7 @@ function formatMinutes(min) {
 
 export default function PlannerPage() {
   const [availableMinutes, setAvailableMinutes] = useState(120)
+  const [includeSubjects, setIncludeSubjects] = useState(true)
   const [plan, setPlan] = useState(null)
   const [loading, setLoading] = useState(false)
   const [requested, setRequested] = useState(false)
@@ -22,7 +23,10 @@ export default function PlannerPage() {
   async function handleGenerate(e) {
     e.preventDefault()
     setLoading(true)
-    const data = await fetchTodayPlan({ availableMinutes: Number(availableMinutes) || 0 })
+    const data = await fetchTodayPlan({
+      availableMinutes: Number(availableMinutes) || 0,
+      includeSubjects,
+    })
     setPlan(data)
     setRequested(true)
     setLoading(false)
@@ -63,6 +67,14 @@ export default function PlannerPage() {
             {loading ? '계산 중...' : '오늘 할 일 추천'}
           </button>
         </div>
+        <label className="planner-subject-toggle">
+          <input
+            type="checkbox"
+            checked={includeSubjects}
+            onChange={(e) => setIncludeSubjects(e.target.checked)}
+          />
+          <span>목표가 없어도 과목만으로 추천받기 (오래 안 한 과목 우선)</span>
+        </label>
       </form>
 
       {requested && plan && (

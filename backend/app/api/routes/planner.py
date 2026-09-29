@@ -5,16 +5,16 @@
 
 계산 로직은 라우트 밖 순수 함수로 분리해 설명 가능성과 테스트 용이성을 확보한다.
 """
-from datetime import date
+from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.api.subject_utils import build_subject_paths
 from app.db.session import get_db
-from app.models import Goal, User
+from app.models import Goal, StudySession, Subject, User
 from app.schemas.planner import PlannerItem, RebalanceItem, TodayPlan
 
 router = APIRouter(prefix="/planner", tags=["planner"])
@@ -181,20 +181,101 @@ def build_rebalance(goals: list[Goal], today: date) -> list[RebalanceItem]:
     return result
 
 
+# 과목 기반 추천에서 한 과목당 제안하는 기본 공부 시간(분).
+SUBJECT_CHUNK_MINUTES = 40
+# 최근 공부량을 볼 기간(일). 이 기간에 적게 한 과목을 우선 추천한다.
+RECENT_DAYS = 14
+
+
+def build_subject_candidates(
+    user_id: int,
+    today: date,
+    paths: dict[int, str],
+    exclude_subject_ids: set[int],
+    db: Session,
+) -> list[PlannerItem]:
+    """목표와 무관하게, 등록한 과목만으로 오늘 할 일 후보를 만든다.
+
+    리프(하위가 없는) 과목을 대상으로, 최근 RECENT_DAYS 동안 공부 시간이 적은 과목을
+    우선 추천한다(오래 손 안 댄 과목 챙기기). 이미 목표에 연결된 과목은 중복을 피해 제외한다.
+    점수는 목표 후보보다 낮게 잡아, 목표가 있으면 목표가 먼저 오도록 한다.
+    """
+    subjects = db.scalars(select(Subject).where(Subject.user_id == user_id)).all()
+    parent_ids = {s.parent_id for s in subjects if s.parent_id is not None}
+    # 리프 = 다른 과목의 부모가 아닌 과목
+    leaves = [s for s in subjects if s.id not in parent_ids]
+
+    since = datetime.combine(today - timedelta(days=RECENT_DAYS), datetime.min.time())
+
+    scored: list[tuple[tuple, PlannerItem]] = []
+    for subj in leaves:
+        if subj.id in exclude_subject_ids:
+            continue
+        recent = db.scalar(
+            select(func.coalesce(func.sum(StudySession.study_seconds), 0)).where(
+                StudySession.user_id == user_id,
+                StudySession.subject_id == subj.id,
+                StudySession.started_at >= since,
+            )
+        )
+        recent_minutes = int(recent or 0) // 60
+        # 최근 공부량이 적을수록 점수가 높다(최대 3점).
+        if recent_minutes == 0:
+            score = 3
+        elif recent_minutes < 60:
+            score = 2
+        else:
+            score = 1
+
+        path = paths.get(subj.id) or subj.name
+        item = PlannerItem(
+            goal_id=0,
+            goal_title="과목 추천",
+            step_id=-subj.id,  # 음수 = 과목 기반 항목(목표/단계와 구분)
+            step_title=f"{subj.name} 공부",
+            subject_path=path,
+            estimated_minutes=SUBJECT_CHUNK_MINUTES,
+            score=score,
+            reason=f"최근 {RECENT_DAYS}일 공부 {recent_minutes}분 · 오래 안 한 과목 챙기기",
+        )
+        # 점수 높은 순 → 최근 공부량 적은 순 → 과목 id
+        scored.append(((-score, recent_minutes, subj.id), item))
+
+    scored.sort(key=lambda x: x[0])
+    return [item for _, item in scored]
+
+
 @router.get("/today", response_model=TodayPlan)
 def get_today_plan(
     available_minutes: int = Query(default=120, ge=0, le=1440),
     target_date: date | None = Query(default=None),
+    include_subjects: bool = Query(default=True),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> TodayPlan:
-    """오늘 할 일을 규칙 기반으로 추천하고, 목표별 하루 권장량을 함께 반환한다."""
+    """오늘 할 일을 규칙 기반으로 추천하고, 목표별 하루 권장량을 함께 반환한다.
+
+    목표가 없어도 include_subjects=True면 등록한 과목만으로 추천한다.
+    목표 후보가 먼저 오고, 과목 후보는 그 뒤(보조)로 정렬된다.
+    """
     today = target_date or date.today()
 
     goals = db.scalars(select(Goal).where(Goal.user_id == current_user.id)).all()
     paths = build_subject_paths(current_user.id, db)
 
-    candidates = build_candidates(list(goals), today, paths)
+    goal_candidates = build_candidates(list(goals), today, paths)
+
+    if include_subjects:
+        # 목표에 이미 연결된 과목은 중복 추천하지 않는다.
+        used_subject_ids = {g.subject_id for g in goals if g.subject_id is not None}
+        subject_candidates = build_subject_candidates(
+            current_user.id, today, paths, used_subject_ids, db
+        )
+    else:
+        subject_candidates = []
+
+    # 목표 후보를 앞에, 과목 후보를 뒤에 둔다.
+    candidates = goal_candidates + subject_candidates
     planned, overflow = pack_by_time(candidates, available_minutes)
     rebalance = build_rebalance(list(goals), today)
 
