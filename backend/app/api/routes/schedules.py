@@ -46,6 +46,7 @@ def create_schedule(
         title=payload.title,
         description=payload.description,
         scheduled_date=payload.scheduled_date,
+        color=payload.color,
     )
     db.add(item)
     db.commit()

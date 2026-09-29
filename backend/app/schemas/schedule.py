@@ -8,6 +8,7 @@ class ScheduleItemCreate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=2000)
     scheduled_date: date
+    color: str = Field(default="#3b82f6", max_length=20)
 
 
 class ScheduleItemUpdate(BaseModel):
@@ -15,6 +16,7 @@ class ScheduleItemUpdate(BaseModel):
     description: str | None = Field(default=None, max_length=2000)
     scheduled_date: date | None = None
     is_done: bool | None = None
+    color: str | None = Field(default=None, max_length=20)
 
 
 class ScheduleItemRead(BaseModel):
@@ -23,5 +25,6 @@ class ScheduleItemRead(BaseModel):
     description: str | None
     scheduled_date: date
     is_done: bool
+    color: str
 
     model_config = {"from_attributes": True}

@@ -23,6 +23,8 @@ class ScheduleItem(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     scheduled_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     is_done: Mapped[bool] = mapped_column(Boolean, default=False)
+    # 일정별 표시 색상(달력 점 색). 기본은 파랑.
+    color: Mapped[str] = mapped_column(String(20), default="#3b82f6", nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
