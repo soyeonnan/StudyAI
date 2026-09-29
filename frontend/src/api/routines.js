@@ -18,6 +18,13 @@ export async function fetchRoutineHistory(definitionId) {
   return data
 }
 
+// 특정 월의 날짜별 루틴 진행 요약 [{ date, done, total, todo: [...] }]
+export async function fetchRoutineMonthSummary(year, month) {
+  // month는 1~12 (JS의 0-based가 아님)
+  const { data } = await apiClient.get(`/routines/summary/${year}/${month}`)
+  return data
+}
+
 // 루틴 생성. effectiveFrom 미지정 시 오늘부터 유효.
 export async function createRoutine({ title, weekdayMask = 127, subjectId = null, effectiveFrom = null }) {
   const { data } = await apiClient.post('/routines', {

@@ -34,11 +34,19 @@ export function useMonthNavigation() {
     setMonth(today.getMonth())
   }
 
+  // 'YYYY-MM-DD' 문자열이 가리키는 연/월로 이동한다.
+  // (달력에서 이전/다음 달 날짜 칸을 눌렀을 때 그 달로 넘어가기 위함)
+  function goToMonthOf(dateStr) {
+    const [y, m] = dateStr.split('-').map(Number)
+    setYear(y)
+    setMonth(m - 1) // month는 0부터
+  }
+
   const range = useMemo(() => {
     const start = toDateString(new Date(year, month, 1))
     const end = toDateString(new Date(year, month + 1, 0))
     return { start, end }
   }, [year, month])
 
-  return { year, month, setYear, setMonth, prevMonth, nextMonth, goToday, range }
+  return { year, month, setYear, setMonth, prevMonth, nextMonth, goToday, goToMonthOf, range }
 }

@@ -8,11 +8,12 @@ export async function fetchSchedules({ start, end } = {}) {
   return data
 }
 
-export async function createSchedule({ title, description, scheduledDate }) {
+export async function createSchedule({ title, description, scheduledDate, color }) {
   const { data } = await apiClient.post('/schedules', {
     title,
     description,
     scheduled_date: scheduledDate,
+    color,
   })
   return data
 }
