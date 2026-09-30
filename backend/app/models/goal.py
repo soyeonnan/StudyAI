@@ -79,7 +79,7 @@ class RoadmapStep(Base):
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     # 단계 정렬 순서. 작을수록 먼저.
     order_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    # 예상 소요 시간(분). 오늘 할 일 추천(today-planner)에서 활용 예정.
+    # 예상 소요 시간(분). 오늘 할 일 추천(planner)의 시간 배분에 사용한다.
     estimated_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     is_done: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
