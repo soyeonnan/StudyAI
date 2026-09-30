@@ -39,6 +39,9 @@ class RoutineDefinition(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
 
+    # 루틴 종류: "study"(공부 캘린더) 또는 "schedule"(일정 캘린더). 두 캘린더의 루틴을 분리한다.
+    kind: Mapped[str] = mapped_column(String(20), default="study", nullable=False, index=True)
+
     # 완전 삭제 대신 보관 종료일을 두면 과거 이력이 보존된다.
     archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)

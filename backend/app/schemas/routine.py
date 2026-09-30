@@ -1,5 +1,6 @@
 """공부 루틴 스키마 (버전 관리)."""
 from datetime import date
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -11,6 +12,8 @@ class RoutineCreate(BaseModel):
     weekday_mask: int = Field(default=127, ge=0, le=127)
     subject_id: int | None = None
     effective_from: date | None = None
+    # 루틴 종류: "study"(공부 캘린더) 또는 "schedule"(일정 캘린더)
+    kind: Literal["study", "schedule"] = "study"
 
 
 class RoutineUpdate(BaseModel):

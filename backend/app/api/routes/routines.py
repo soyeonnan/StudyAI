@@ -71,14 +71,16 @@ def _validate_subject(subject_id: int | None, user: User, db: Session) -> None:
 
 @router.get("", response_model=list[RoutineRead])
 def list_routines(
+    kind: str = Query(default="study"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[RoutineRead]:
-    """보관되지 않은 루틴들의 현재 유효 버전을 반환한다."""
+    """보관되지 않은 루틴들의 현재 유효 버전을 반환한다. kind로 캘린더 종류를 구분한다."""
     definitions = db.scalars(
         select(RoutineDefinition).where(
             RoutineDefinition.user_id == current_user.id,
             RoutineDefinition.archived_at.is_(None),
+            RoutineDefinition.kind == kind,
         )
     ).all()
 
@@ -104,18 +106,20 @@ def list_routines(
 @router.get("/on/{target_date}", response_model=list[RoutineWithStatus])
 def list_routines_for_date(
     target_date: date,
+    kind: str = Query(default="study"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[RoutineWithStatus]:
     """해당 날짜에 유효했던 버전 중, 그 날짜 요일에 반복되는 루틴을 완료 여부와 함께 반환한다."""
     bit = _weekday_bit(target_date)
 
-    # 해당 날짜에 유효한 모든 버전 (사용자 소유, 요일 매칭)
+    # 해당 날짜에 유효한 모든 버전 (사용자 소유, 요일 매칭, kind 일치)
     versions = db.scalars(
         select(RoutineVersion)
         .join(RoutineDefinition, RoutineVersion.definition_id == RoutineDefinition.id)
         .where(
             RoutineDefinition.user_id == current_user.id,
+            RoutineDefinition.kind == kind,
             RoutineVersion.effective_from <= target_date,
             or_(RoutineVersion.effective_to.is_(None), RoutineVersion.effective_to >= target_date),
         )
@@ -183,7 +187,7 @@ def create_routine(
 ) -> RoutineRead:
     _validate_subject(payload.subject_id, current_user, db)
 
-    definition = RoutineDefinition(user_id=current_user.id)
+    definition = RoutineDefinition(user_id=current_user.id, kind=payload.kind)
     db.add(definition)
     db.flush()  # definition.id 확보
 
@@ -309,6 +313,7 @@ def toggle_routine_completion(
 def routine_month_summary(
     year: int,
     month: int,
+    kind: str = Query(default="study"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[dict]:
@@ -330,6 +335,7 @@ def routine_month_summary(
             .join(RoutineDefinition, RoutineVersion.definition_id == RoutineDefinition.id)
             .where(
                 RoutineDefinition.user_id == current_user.id,
+                RoutineDefinition.kind == kind,
                 RoutineVersion.effective_from <= target,
                 or_(RoutineVersion.effective_to.is_(None), RoutineVersion.effective_to >= target),
             )
