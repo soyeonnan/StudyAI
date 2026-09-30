@@ -32,8 +32,6 @@
 | 인프라 | Docker, docker-compose, Nginx |
 | 모니터링 | Prometheus, Grafana, Loki, Promtail |
 
-기술 선택 이유는 [docs/기술스택-선택이유.md](docs/기술스택-선택이유.md)를 참고하세요.
-
 ## 프로젝트 구조
 
 전체 디렉토리 설명은 [docs/디렉토리-구조.md](docs/디렉토리-구조.md)에 정리되어 있습니다.
@@ -109,8 +107,6 @@ python -m scripts.make_admin your@email.com
 - [플래너 추천 규칙](docs/플래너-추천-규칙.md)
 - [개선 제안](docs/개선-제안.md) — 향후 업그레이드/조정 포인트
 - [디렉토리 구조](docs/디렉토리-구조.md)
-- [기술 스택 선택 이유](docs/기술스택-선택이유.md)
-- [설계 트레이드오프](docs/트레이드오프.md)
 
 ## 핵심 설계: 루틴 시간 독립성
 
