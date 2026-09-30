@@ -54,7 +54,7 @@ export default function StudyPage() {
     const [sessionData, subjectData, summaryData] = await Promise.all([
       fetchSessions({ start: range.start, end: range.end }),
       fetchSubjects(),
-      fetchRoutineMonthSummary(year, month + 1), // month는 0-based → +1
+      fetchRoutineMonthSummary(year, month + 1, 'study'), // month는 0-based → +1
     ])
     setSessions(sessionData)
     setSubjects(subjectData)
@@ -62,7 +62,8 @@ export default function StudyPage() {
   }, [range.start, range.end, year, month])
 
   const loadRoutines = useCallback(async () => {
-    const data = await fetchRoutinesForDate(selectedDate)
+    // 공부 캘린더 전용 루틴(kind=study)만 조회
+    const data = await fetchRoutinesForDate(selectedDate, 'study')
     setRoutines(data)
   }, [selectedDate])
 
@@ -91,7 +92,9 @@ export default function StudyPage() {
     e.preventDefault()
     const title = newRoutineTitle.trim()
     if (!title) return
-    await createRoutine({ title, weekdayMask: 127, subjectId: newRoutineSubject })
+    // 선택한 날짜부터 유효하도록 effective_from을 명시한다.
+    // (서버 today와 화면 selectedDate가 어긋나 방금 만든 루틴이 안 보이는 문제 방지)
+    await createRoutine({ title, weekdayMask: 127, subjectId: newRoutineSubject, effectiveFrom: selectedDate, kind: 'study' })
     setNewRoutineTitle('')
     setNewRoutineSubject(null)
     loadRoutines()
@@ -171,7 +174,8 @@ export default function StudyPage() {
     loadMonth()
   }
 
-  // 날짜 칸 배지: 루틴 진행 단계를 완료율 색상 막대로, 공부 기록은 초록 점으로 표시.
+  // 날짜 칸 배지: 그 날 루틴이 있으면 진행률(완료 단계/전체)을 색상 막대로 항상 표시한다.
+  // 완료 0%여도 회색 트랙 + 개수를 보여줘 "루틴 있음"을 알 수 있게 한다. 공부 기록은 초록 점.
   function renderBadge(dateStr) {
     const hasRecord = sessions.some((s) => toDateString(new Date(s.started_at)) === dateStr)
     const summary = routineSummary[dateStr]
@@ -181,13 +185,20 @@ export default function StudyPage() {
     if (summary && summary.total > 0) {
       const percent = toPercent(summary.done, summary.total)
       const color = progressColor(percent)
+      const title = `루틴 ${summary.done}/${summary.total} (${percent}%)${
+        summary.todo?.length ? ` · 할 일: ${summary.todo.join(', ')}` : ''
+      }`
       parts.push(
-        <span
-          key="routine"
-          className="routine-progress-mini"
-          title={`루틴 ${summary.done}/${summary.total}${summary.todo?.length ? ` · 할 일: ${summary.todo.join(', ')}` : ''}`}
-        >
-          <span className="routine-progress-mini-fill" style={{ width: `${percent}%`, background: color }} />
+        <span key="routine" className="routine-badge" title={title}>
+          <span className="routine-progress-mini">
+            <span
+              className="routine-progress-mini-fill"
+              style={{ width: `${percent}%`, background: color }}
+            />
+          </span>
+          <span className="routine-badge-count" style={{ color }}>
+            {summary.done}/{summary.total}
+          </span>
         </span>,
       )
     }

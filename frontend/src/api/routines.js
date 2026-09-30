@@ -6,9 +6,9 @@ export async function fetchRoutines() {
   return data
 }
 
-// 특정 날짜에 유효했던 루틴 + 완료 여부 (버전 관리 반영)
-export async function fetchRoutinesForDate(targetDate) {
-  const { data } = await apiClient.get(`/routines/on/${targetDate}`)
+// 특정 날짜에 유효했던 루틴 + 완료 여부 (버전 관리 반영). kind로 캘린더 종류 구분.
+export async function fetchRoutinesForDate(targetDate, kind = 'study') {
+  const { data } = await apiClient.get(`/routines/on/${targetDate}`, { params: { kind } })
   return data
 }
 
@@ -18,20 +18,21 @@ export async function fetchRoutineHistory(definitionId) {
   return data
 }
 
-// 특정 월의 날짜별 루틴 진행 요약 [{ date, done, total, todo: [...] }]
-export async function fetchRoutineMonthSummary(year, month) {
+// 특정 월의 날짜별 루틴 진행 요약 [{ date, done, total, todo: [...] }]. kind로 종류 구분.
+export async function fetchRoutineMonthSummary(year, month, kind = 'study') {
   // month는 1~12 (JS의 0-based가 아님)
-  const { data } = await apiClient.get(`/routines/summary/${year}/${month}`)
+  const { data } = await apiClient.get(`/routines/summary/${year}/${month}`, { params: { kind } })
   return data
 }
 
-// 루틴 생성. effectiveFrom 미지정 시 오늘부터 유효.
-export async function createRoutine({ title, weekdayMask = 127, subjectId = null, effectiveFrom = null }) {
+// 루틴 생성. effectiveFrom 미지정 시 오늘부터 유효. kind로 캘린더 종류 지정.
+export async function createRoutine({ title, weekdayMask = 127, subjectId = null, effectiveFrom = null, kind = 'study' }) {
   const { data } = await apiClient.post('/routines', {
     title,
     weekday_mask: weekdayMask,
     subject_id: subjectId,
     effective_from: effectiveFrom,
+    kind,
   })
   return data
 }

@@ -43,14 +43,21 @@ def _weekday_bit(target: date) -> int:
     return 1 << ((target.weekday() + 1) % 7)
 
 
-def _routine_counts_for_date(user_id: int, target: date, db: Session) -> tuple[int, int]:
-    """특정 날짜에 유효+요일 매칭되는 루틴 수(total)와 완료 수(done)를 반환한다."""
+def _routine_counts_for_date(
+    user_id: int, target: date, db: Session, kind: str = "study"
+) -> tuple[int, int]:
+    """특정 날짜에 유효+요일 매칭되는 루틴 수(total)와 완료 수(done)를 반환한다.
+
+    대시보드 '공부 루틴' 통계는 공부 캘린더 루틴(kind='study')만 집계한다.
+    일정 캘린더 루틴(kind='schedule')은 제외해 두 캘린더를 분리한 설계와 일치시킨다.
+    """
     bit = _weekday_bit(target)
     versions = db.scalars(
         select(RoutineVersion)
         .join(RoutineDefinition, RoutineVersion.definition_id == RoutineDefinition.id)
         .where(
             RoutineDefinition.user_id == user_id,
+            RoutineDefinition.kind == kind,
             RoutineVersion.effective_from <= target,
             or_(RoutineVersion.effective_to.is_(None), RoutineVersion.effective_to >= target),
         )
