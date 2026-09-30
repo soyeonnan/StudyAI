@@ -350,6 +350,19 @@
   margin-bottom: 16px;
 }
 
+.routine-add-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.routine-add-actions .btn-primary {
+  flex: 1;
+}
+
+.routine-manage-btn {
+  flex-shrink: 0;
+}
+
 .routine-subject {
   color: var(--text-dim);
   font-size: 0.8rem;

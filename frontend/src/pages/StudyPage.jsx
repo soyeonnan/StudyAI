@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import CalendarGrid from '../components/CalendarGrid'
 import CalendarHeader from '../components/CalendarHeader'
@@ -26,6 +27,7 @@ export default function StudyPage() {
   const nav = useMonthNavigation()
   const { year, month, range, goToMonthOf } = nav
   const confirm = useConfirm()
+  const navigate = useNavigate()
   const [selectedDate, setSelectedDate] = useState(toDateString(new Date()))
 
   // 날짜 선택: 다른 달 칸을 누르면 그 달로 이동한다.
@@ -90,8 +92,21 @@ export default function StudyPage() {
   // ---- 루틴 ----
   async function handleAddRoutine(e) {
     e.preventDefault()
-    const title = newRoutineTitle.trim()
-    if (!title) return
+    let title = newRoutineTitle.trim()
+    // 제목이 없고 과목만 선택했다면 과목명을 제목으로 사용한다.
+    if (!title && newRoutineSubject) {
+      title = subjectMap[newRoutineSubject]?.name || '루틴'
+    }
+    // 제목도 과목도 없으면 추가하지 않는다.
+    if (!title) {
+      await confirm({
+        title: '루틴 내용 필요',
+        message: '루틴 이름을 입력하거나 과목을 선택해 주세요.',
+        confirmText: '알겠어요',
+        cancelText: '닫기',
+      })
+      return
+    }
     // 선택한 날짜부터 유효하도록 effective_from을 명시한다.
     // (서버 today와 화면 selectedDate가 어긋나 방금 만든 루틴이 안 보이는 문제 방지)
     await createRoutine({ title, weekdayMask: 127, subjectId: newRoutineSubject, effectiveFrom: selectedDate, kind: 'study' })
@@ -258,12 +273,21 @@ export default function StudyPage() {
             <form className="routine-add" onSubmit={handleAddRoutine}>
               <input
                 className="field"
-                placeholder="반복할 루틴 (예: 영어 단어 30개)"
+                placeholder="반복할 루틴 (예: 영어 단어 30개) — 비우면 과목명으로 생성"
                 value={newRoutineTitle}
                 onChange={(e) => setNewRoutineTitle(e.target.value)}
               />
               <SubjectTreePicker value={newRoutineSubject} onChange={setNewRoutineSubject} allowEmpty />
-              <button type="submit" className="btn btn-primary">루틴 추가</button>
+              <div className="routine-add-actions">
+                <button type="submit" className="btn btn-primary">루틴 추가</button>
+                <button
+                  type="button"
+                  className="btn routine-manage-btn"
+                  onClick={() => navigate('/subjects')}
+                >
+                  과목 관리
+                </button>
+              </div>
             </form>
 
             <ul className="todo-list">
