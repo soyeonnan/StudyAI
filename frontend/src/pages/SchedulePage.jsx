@@ -13,10 +13,11 @@ import {
 import {
   createRoutine,
   deleteRoutine,
+  fetchRoutineMonthSummary,
   fetchRoutinesForDate,
   toggleRoutine,
 } from '../api/routines'
-import { toPercent } from '../lib/progress'
+import { progressColor, toPercent } from '../lib/progress'
 import { toDateString } from '../lib/time'
 import { useMonthNavigation } from '../lib/useMonthNavigation'
 import './CalendarPage.css'
@@ -34,10 +35,13 @@ export default function SchedulePage() {
 
   const [items, setItems] = useState([]) // 개별 일정(월 범위)
   const [routines, setRoutines] = useState([]) // 선택 날짜의 루틴
+  // 날짜별 루틴 진행 요약 { 'YYYY-MM-DD': { done, total, todo } } (kind=schedule)
+  const [routineSummary, setRoutineSummary] = useState({})
 
   const [newTitle, setNewTitle] = useState('')
   const [newColor, setNewColor] = useState(SCHEDULE_COLORS[0])
   const [newRoutineTitle, setNewRoutineTitle] = useState('')
+  const [colorEditingId, setColorEditingId] = useState(null) // 색상 편집 중인 일정 id
 
   // 날짜 선택: 다른 달 칸을 누르면 그 달로 이동한다.
   function handleSelectDate(dateStr) {
@@ -47,12 +51,17 @@ export default function SchedulePage() {
   }
 
   const loadItems = useCallback(async () => {
-    const data = await fetchSchedules({ start: range.start, end: range.end })
-    setItems(data)
-  }, [range.start, range.end])
+    const [scheduleData, summaryData] = await Promise.all([
+      fetchSchedules({ start: range.start, end: range.end }),
+      fetchRoutineMonthSummary(year, month + 1, 'schedule'), // 일정 캘린더 루틴 진행 요약
+    ])
+    setItems(scheduleData)
+    setRoutineSummary(Object.fromEntries(summaryData.map((s) => [s.date, s])))
+  }, [range.start, range.end, year, month])
 
   const loadRoutines = useCallback(async () => {
-    const data = await fetchRoutinesForDate(selectedDate)
+    // 일정 캘린더 전용 루틴(kind=schedule)만 조회
+    const data = await fetchRoutinesForDate(selectedDate, 'schedule')
     setRoutines(data)
   }, [selectedDate])
 
@@ -90,6 +99,13 @@ export default function SchedulePage() {
     setItems((prev) => prev.map((it) => (it.id === item.id ? { ...it, is_done: !it.is_done } : it)))
   }
 
+  // 기존 일정의 색상 변경
+  async function handleChangeColor(item, color) {
+    await updateSchedule(item.id, { color })
+    setItems((prev) => prev.map((it) => (it.id === item.id ? { ...it, color } : it)))
+    setColorEditingId(null)
+  }
+
   async function handleDelete(item) {
     const ok = await confirm({
       title: '일정 삭제',
@@ -107,9 +123,11 @@ export default function SchedulePage() {
     e.preventDefault()
     const title = newRoutineTitle.trim()
     if (!title) return
-    await createRoutine({ title, weekdayMask: 127 })
+    // 선택한 날짜부터 유효하도록 effective_from을 명시한다. 일정 캘린더 전용(kind=schedule).
+    await createRoutine({ title, weekdayMask: 127, effectiveFrom: selectedDate, kind: 'schedule' })
     setNewRoutineTitle('')
     loadRoutines()
+    loadItems() // 달력 루틴 요약 갱신
   }
 
   async function handleToggleRoutine(routine) {
@@ -122,6 +140,7 @@ export default function SchedulePage() {
         r.definition_id === routine.definition_id ? { ...r, is_done: !r.is_done } : r,
       ),
     )
+    loadItems() // 달력 루틴 요약 갱신
   }
 
   async function handleDeleteRoutine(routine) {
@@ -134,27 +153,49 @@ export default function SchedulePage() {
     if (!ok) return
     await deleteRoutine(routine.definition_id)
     loadRoutines()
+    loadItems() // 달력 루틴 요약 갱신
   }
 
   // 날짜 칸 배지: 그날 일정 개수만큼 색상 점을 찍는다(완료된 건 흐리게).
   function renderBadge(dateStr) {
     const dayItems = items.filter((it) => it.scheduled_date === dateStr)
-    if (dayItems.length === 0) return null
-    // 최대 4개까지 점으로, 그 이상은 +N
-    const shown = dayItems.slice(0, 4)
-    const extra = dayItems.length - shown.length
+    const summary = routineSummary[dateStr]
+    const hasRoutine = summary && summary.total > 0
+
+    if (dayItems.length === 0 && !hasRoutine) return null
+
     return (
-      <>
-        {shown.map((it) => (
+      <span className="sched-badge">
+        {/* 개별 일정: 개수만큼 색상 점을 전부 표시(완료는 흐리게) */}
+        {dayItems.length > 0 && (
+          <span className="sched-badge-dots">
+            {dayItems.map((it) => (
+              <span
+                key={it.id}
+                className={`badge-dot ${it.is_done ? 'badge-dot-faded' : ''}`}
+                style={{ background: it.color }}
+                title={`${it.title}${it.is_done ? ' (완료)' : ''}`}
+              />
+            ))}
+          </span>
+        )}
+
+        {/* 루틴: 완료한 것만 진행률 막대로(개별 일정과 분리된 줄) */}
+        {hasRoutine && summary.done > 0 && (
           <span
-            key={it.id}
-            className={`badge-dot ${it.is_done ? 'badge-dot-faded' : ''}`}
-            style={{ background: it.color }}
-            title={`${it.title}${it.is_done ? ' (완료)' : ''}`}
-          />
-        ))}
-        {extra > 0 && <span className="badge-more">+{extra}</span>}
-      </>
+            className="sched-badge-routine"
+            title={`루틴 ${summary.done}/${summary.total} 완료`}
+          >
+            <span
+              className="sched-badge-routine-fill"
+              style={{
+                width: `${toPercent(summary.done, summary.total)}%`,
+                background: progressColor(toPercent(summary.done, summary.total)),
+              }}
+            />
+          </span>
+        )}
+      </span>
     )
   }
 
@@ -170,7 +211,7 @@ export default function SchedulePage() {
           renderBadge={renderBadge}
         />
         <div className="calendar-legend">
-          <span>일정마다 지정한 색으로 표시돼요. 완료한 일정은 흐리게 보여요.</span>
+          <span>위: 개별 일정(색 점, 완료는 흐리게) · 아래: 완료한 루틴 진행 막대</span>
         </div>
       </div>
 
@@ -239,10 +280,34 @@ export default function SchedulePage() {
                 <li key={item.id} className={`todo-item ${item.is_done ? 'todo-done' : ''}`}>
                   <label className="todo-check">
                     <input type="checkbox" checked={item.is_done} onChange={() => handleToggle(item)} />
-                    <span className="schedule-color-tag" style={{ background: item.color }} />
+                    <button
+                      type="button"
+                      className="schedule-color-tag schedule-color-tag-btn"
+                      style={{ background: item.color }}
+                      title="색상 변경"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setColorEditingId(colorEditingId === item.id ? null : item.id)
+                      }}
+                    />
                     <span className="todo-title">{item.title}</span>
                   </label>
                   <button className="btn btn-danger" onClick={() => handleDelete(item)}>삭제</button>
+
+                  {/* 색상 변경 팔레트 */}
+                  {colorEditingId === item.id && (
+                    <div className="color-picker schedule-color-edit">
+                      {SCHEDULE_COLORS.map((c) => (
+                        <button
+                          type="button"
+                          key={c}
+                          className={`color-swatch ${item.color === c ? 'color-swatch-active' : ''}`}
+                          style={{ background: c }}
+                          onClick={() => handleChangeColor(item, c)}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
