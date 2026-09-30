@@ -180,21 +180,27 @@ export default function SchedulePage() {
           </span>
         )}
 
-        {/* 루틴: 완료한 것만 진행률 막대로(개별 일정과 분리된 줄) */}
-        {hasRoutine && summary.done > 0 && (
-          <span
-            className="sched-badge-routine"
-            title={`루틴 ${summary.done}/${summary.total} 완료`}
-          >
-            <span
-              className="sched-badge-routine-fill"
-              style={{
-                width: `${toPercent(summary.done, summary.total)}%`,
-                background: progressColor(toPercent(summary.done, summary.total)),
-              }}
-            />
-          </span>
-        )}
+        {/* 루틴: 공부 캘린더와 동일하게 진행 단계를 항상 표시(막대 + 완료/전체 개수) */}
+        {hasRoutine && (() => {
+          const percent = toPercent(summary.done, summary.total)
+          const color = progressColor(percent)
+          const title = `루틴 ${summary.done}/${summary.total} (${percent}%)${
+            summary.todo?.length ? ` · 할 일: ${summary.todo.join(', ')}` : ''
+          }`
+          return (
+            <span className="routine-badge" title={title}>
+              <span className="routine-progress-mini">
+                <span
+                  className="routine-progress-mini-fill"
+                  style={{ width: `${percent}%`, background: color }}
+                />
+              </span>
+              <span className="routine-badge-count" style={{ color }}>
+                {summary.done}/{summary.total}
+              </span>
+            </span>
+          )
+        })()}
       </span>
     )
   }
